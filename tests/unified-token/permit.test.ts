@@ -20,16 +20,17 @@ describe('UnifiedToken — ERC-2612 permit', function () {
   let token: any;
   let sys: any;
   let cpi: any;
+  let admin: any;
   let alice: any;
   let bob: any;
   let chainId: number;
 
   beforeEach(async () => {
-    [, alice, bob] = await ethers.getSigners();
+    [admin, alice, bob] = await ethers.getSigners();
     ({ sys, cpi } = await installMockPrecompiles());
 
     const T = await ethers.getContractFactory('UnifiedToken');
-    token = await T.deploy(USDC_MINT_DEVNET, 'Unified USDC', 'USDC', 6);
+    token = await T.deploy(USDC_MINT_DEVNET, 'Unified USDC', 'USDC', 6, admin.address);
     await token.deployed();
 
     chainId = (await ethers.provider.getNetwork()).chainId;

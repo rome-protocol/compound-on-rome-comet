@@ -27,15 +27,16 @@ describe('UnifiedToken — allowances (EVM-side)', function () {
   let token: any;
   let sys: any;
   let cpi: any;
+  let admin: any;
   let alice: any;
   let bob: any;
 
   beforeEach(async () => {
-    [, alice, bob] = await ethers.getSigners();
+    [admin, alice, bob] = await ethers.getSigners();
     ({ sys, cpi } = await installMockPrecompiles());
 
     const T = await ethers.getContractFactory('UnifiedToken');
-    token = await T.deploy(USDC_MINT_DEVNET, 'Unified USDC', 'USDC', 6);
+    token = await T.deploy(USDC_MINT_DEVNET, 'Unified USDC', 'USDC', 6, admin.address);
     await token.deployed();
 
     const aliceAta = '0x1111111111111111111111111111111111111111111111111111111111111111';
@@ -114,8 +115,10 @@ describe('UnifiedToken — allowances (EVM-side)', function () {
 
   it('does NOT issue a Solana SPL approve CPI', async () => {
     // The whole point of EVM-side allowances: zero CPI on approve.
-    await token.connect(alice).approve(bob.address, 100_000_000);
-    const calls = await cpi.getInvocations();
-    expect(calls.length).to.equal(0);
+    const tx = await token.connect(alice).approve(bob.address, 100_000_000);
+    const rcpt = await tx.wait();
+    const TOPIC0 = ethers.utils.id('InvokeRecorded(bytes32,bool,bytes32,uint256)');
+    const cpiLogs = rcpt.logs.filter((l: any) => l.topics[0] === TOPIC0);
+    expect(cpiLogs.length).to.equal(0);
   });
 });

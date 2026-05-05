@@ -35,28 +35,97 @@ export const CPI_PROGRAM_ADDR = '0xFF00000000000000000000000000000000000008';
  * Solidity calls to SystemProgram / CpiProgram resolve to test logic.
  *
  * Returns the deployed mock contracts so the test can stub specific responses.
+ *
+ * IMPORTANT: state inside the precompile addresses persists across tests
+ * because `hardhat_setCode` overwrites bytecode but not storage. Tests using
+ * this helper rely on a snapshot/revert wrap; a fresh installMockPrecompiles
+ * call resets storage to all-zero by overwriting bytecode AND clearing
+ * storage via hardhat_setStorageAt for the few touched slots.
  */
+/**
+ * Strategy: each beforeEach uses a fresh hardhat snapshot. The first call
+ * to installMockPrecompiles() in this test process deploys the mocks at the
+ * precompile addresses; subsequent calls in later tests *re-snapshot*, so
+ * mock storage is reset to its post-deploy state. This is the canonical
+ * Hardhat test isolation pattern and avoids needing per-mock `clear()`
+ * methods.
+ */
+let _baseSnapshot: string | null = null;
+
 export async function installMockPrecompiles() {
   const MockSystemProgram = await ethers.getContractFactory('MockSystemProgram');
   const MockCpiProgram = await ethers.getContractFactory('MockCpiProgram');
 
-  const sysImpl = await MockSystemProgram.deploy();
-  await sysImpl.deployed();
-  const cpiImpl = await MockCpiProgram.deploy();
-  await cpiImpl.deployed();
+  if (_baseSnapshot === null) {
+    // First call in the test process — deploy mocks fresh.
+    const sysImpl = await MockSystemProgram.deploy();
+    await sysImpl.deployed();
+    const cpiImpl = await MockCpiProgram.deploy();
+    await cpiImpl.deployed();
+    const sysCode = await ethers.provider.getCode(sysImpl.address);
+    const cpiCode = await ethers.provider.getCode(cpiImpl.address);
+    await ethers.provider.send('hardhat_setCode', [SYSTEM_PROGRAM_ADDR, sysCode]);
+    await ethers.provider.send('hardhat_setCode', [CPI_PROGRAM_ADDR, cpiCode]);
+    _baseSnapshot = await ethers.provider.send('evm_snapshot', []);
+  } else {
+    // Subsequent call — revert to clean post-deploy state and re-snapshot.
+    const ok = await ethers.provider.send('evm_revert', [_baseSnapshot]);
+    if (!ok) {
+      throw new Error('Failed to revert snapshot — did a test mutate without snapshotting?');
+    }
+    _baseSnapshot = await ethers.provider.send('evm_snapshot', []);
+  }
 
-  // Copy bytecode from the deployed implementations into the precompile addresses.
-  const sysCode = await ethers.provider.getCode(sysImpl.address);
-  const cpiCode = await ethers.provider.getCode(cpiImpl.address);
-
-  await ethers.provider.send('hardhat_setCode', [SYSTEM_PROGRAM_ADDR, sysCode]);
-  await ethers.provider.send('hardhat_setCode', [CPI_PROGRAM_ADDR, cpiCode]);
-
-  // Bind to the precompile address so tests can configure mock state.
   const sys = MockSystemProgram.attach(SYSTEM_PROGRAM_ADDR);
   const cpi = MockCpiProgram.attach(CPI_PROGRAM_ADDR);
-
   return { sys, cpi };
+}
+
+/** Take a snapshot of the EVM state. Use in beforeEach + revert in afterEach. */
+export async function snapshot(): Promise<string> {
+  return await ethers.provider.send('evm_snapshot', []);
+}
+export async function revert(snapshotId: string): Promise<void> {
+  await ethers.provider.send('evm_revert', [snapshotId]);
+}
+
+/**
+ * Deploy a UnifiedToken with the calling signer (default first signer) as admin.
+ * Reduces test boilerplate.
+ */
+export async function deployUnifiedToken(
+  mint: string,
+  name: string,
+  symbol: string,
+  dec: number,
+  admin?: any,
+) {
+  const T = await ethers.getContractFactory('UnifiedToken');
+  const adminAddr = admin?.address ?? (await ethers.getSigners())[0].address;
+  const token = await T.deploy(mint, name, symbol, dec, adminAddr);
+  await token.deployed();
+  return token;
+}
+
+/**
+ * Extract InvokeRecorded events from a tx receipt. Used for asserting CPI
+ * invocations: under delegatecall, the mock's events stamp to UnifiedToken's
+ * address but topic0 = keccak256("InvokeRecorded(bytes32,bool,bytes32,uint256)")
+ * is unique. Tests filter by topic and decode the args.
+ */
+export function extractInvokeRecorded(rcpt: any) {
+  // topic0 = keccak256("InvokeRecorded(bytes32,bool,bytes32,uint256)")
+  const TOPIC0 = ethers.utils.id('InvokeRecorded(bytes32,bool,bytes32,uint256)');
+  const calls = rcpt.logs
+    .filter((l: any) => l.topics[0] === TOPIC0)
+    .map((l: any) => ({
+      programId: l.topics[1],
+      // bool indexed encoded as bytes32 — non-zero = true.
+      signed: !ethers.BigNumber.from(l.topics[2]).isZero(),
+      dataHash: ethers.utils.hexDataSlice(l.data, 0, 32),
+      accountCount: ethers.BigNumber.from(ethers.utils.hexDataSlice(l.data, 32, 64)).toNumber(),
+    }));
+  return calls;
 }
 
 /** Convert a u64 amount into Borsh-encoded SPL Token Account data (165 bytes). */

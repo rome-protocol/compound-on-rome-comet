@@ -31,7 +31,7 @@ describe('UnifiedToken — edge cases', function () {
     ({ sys, cpi } = await installMockPrecompiles());
 
     const T = await ethers.getContractFactory('UnifiedToken');
-    token = await T.deploy(USDC_MINT_DEVNET, 'Unified USDC', 'USDC', 6);
+    token = await T.deploy(USDC_MINT_DEVNET, 'Unified USDC', 'USDC', 6, admin.address);
     await token.connect(admin).grantPreDepositedCaller(orchestrator.address);
 
     const aliceAta = '0x1111111111111111111111111111111111111111111111111111111111111111';
@@ -94,9 +94,17 @@ describe('UnifiedToken — edge cases', function () {
   });
 
   it('reentrancy protection: nested transfer in mock-CPI hook reverts', async () => {
-    // Mock CPI is configured to re-enter UnifiedToken.transfer when
-    // transfer_checked is invoked. UnifiedToken's reentrancy guard MUST trip.
-    await cpi.setReentrancyAttack(token.address, true);
+    // Replace MockCpiProgram bytecode with the reentrancy-attacker variant
+    // for this test. Its invoke_signed re-enters UnifiedToken.transfer
+    // unconditionally; the reentrancy guard MUST trip.
+    const Attacker = await ethers.getContractFactory('MockCpiReentrancyAttacker');
+    const impl = await Attacker.deploy();
+    await impl.deployed();
+    const code = await ethers.provider.getCode(impl.address);
+    await ethers.provider.send('hardhat_setCode', [
+      '0xFF00000000000000000000000000000000000008',
+      code,
+    ]);
 
     await expect(
       token.connect(alice).transfer(bob.address, 10_000_000),

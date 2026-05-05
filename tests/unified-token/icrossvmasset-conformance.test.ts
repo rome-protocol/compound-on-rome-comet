@@ -25,11 +25,13 @@ import {
 
 describe('UnifiedToken — ICrossVMAsset conformance', function () {
   let token: any;
+  let admin: any;
 
   beforeEach(async () => {
+    [admin] = await ethers.getSigners();
     await installMockPrecompiles();
     const T = await ethers.getContractFactory('UnifiedToken');
-    token = await T.deploy(USDC_MINT_DEVNET, 'Unified USDC', 'USDC', 6);
+    token = await T.deploy(USDC_MINT_DEVNET, 'Unified USDC', 'USDC', 6, admin.address);
   });
 
   it('exposes all IERC20 selectors', async () => {
@@ -70,7 +72,7 @@ describe('UnifiedToken — ICrossVMAsset conformance', function () {
   });
 
   it('solanaAtaOf returns a deterministic ATA for an EVM addr', async () => {
-    const [, alice] = await ethers.getSigners();
+    const [admin, alice] = await ethers.getSigners();
     const ata1 = await token.solanaAtaOf(alice.address);
     const ata2 = await token.solanaAtaOf(alice.address);
     expect(ata1).to.equal(ata2);

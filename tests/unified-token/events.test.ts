@@ -32,7 +32,7 @@ describe('UnifiedToken — events', function () {
     ({ sys, cpi } = await installMockPrecompiles());
 
     const T = await ethers.getContractFactory('UnifiedToken');
-    token = await T.deploy(USDC_MINT_DEVNET, 'Unified USDC', 'USDC', 6);
+    token = await T.deploy(USDC_MINT_DEVNET, 'Unified USDC', 'USDC', 6, admin.address);
     await token.deployed();
     await token.connect(admin).grantPreDepositedCaller(orchestrator.address);
 
@@ -76,8 +76,8 @@ describe('UnifiedToken — events', function () {
     await cpi.setAccountData(protoAta, encodeSplTokenAccountData(50_000_000n));
 
     await expect(
-      token.connect(orchestrator).transferFromPreDeposited(alice.address, protoAta, 50_000_000),
-    ).to.emit(token, 'Transfer').withArgs(alice.address, protoAta, 50_000_000);
+      token.connect(orchestrator).transferFromPreDeposited(alice.address, bob.address, protoAta, 50_000_000),
+    ).to.emit(token, 'Transfer').withArgs(alice.address, bob.address, 50_000_000);
   });
 
   it('approve emits Approval', async () => {

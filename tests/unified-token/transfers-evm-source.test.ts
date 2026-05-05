@@ -14,22 +14,24 @@ import {
   installMockPrecompiles,
   encodeSplTokenAccountData,
   USDC_MINT_DEVNET,
+  extractInvokeRecorded,
 } from './_helpers';
 
 describe('UnifiedToken — transfers via CPI (EVM lane)', function () {
   let token: any;
   let sys: any;
   let cpi: any;
+  let admin: any;
   let alice: any;
   let bob: any;
   let charlie: any;
 
   beforeEach(async () => {
-    [, alice, bob, charlie] = await ethers.getSigners();
+    [admin, alice, bob, charlie] = await ethers.getSigners();
     ({ sys, cpi } = await installMockPrecompiles());
 
     const T = await ethers.getContractFactory('UnifiedToken');
-    token = await T.deploy(USDC_MINT_DEVNET, 'Unified USDC', 'USDC', 6);
+    token = await T.deploy(USDC_MINT_DEVNET, 'Unified USDC', 'USDC', 6, admin.address);
     await token.deployed();
 
     // Pre-populate alice's ATA with 100 USDC.
@@ -42,16 +44,17 @@ describe('UnifiedToken — transfers via CPI (EVM lane)', function () {
   });
 
   it('transfer() invokes a signed CPI to SPL Token transfer_checked', async () => {
-    await token.connect(alice).transfer(bob.address, 10_000_000);
+    const tx = await token.connect(alice).transfer(bob.address, 10_000_000);
+    const rcpt = await tx.wait();
 
-    // Mock CPI tracks invocations — verify SPL Token program was called once,
-    // signed, with the expected accounts (source ATA, mint, dest ATA, owner PDA).
-    const calls = await cpi.getInvocations();
+    // Mock CPI emits InvokeRecorded under delegatecall — read from logs.
+    const calls = extractInvokeRecorded(rcpt);
     expect(calls.length).to.equal(1);
     expect(calls[0].signed).to.equal(true);
     expect(calls[0].programId).to.equal(
       '0x06ddf6e1d765a193d9cbe146ceeb79ac1cb485ed5f5b37913a8cf5857eff00a9', // Tokenkeg
     );
+    expect(calls[0].accountCount).to.equal(4); // source, mint, dest, authority
   });
 
   it('transfer() emits IERC20.Transfer with EVM addresses', async () => {
@@ -103,17 +106,17 @@ describe('UnifiedToken — transfers via CPI (EVM lane)', function () {
     ).to.be.revertedWith('UnifiedToken: amount exceeds uint64');
   });
 
-  it('CPI seeds derive from spender PDA, not owner PDA', async () => {
-    // For transferFrom, the CPI is signed as the spender (msg.sender) since
-    // they're the one moving tokens out of the source ATA. Source ATA owner
-    // is the *spender's* authority PDA after approve has set up the SPL delegate.
+  it('CPI invocation is recorded with signed=true', async () => {
+    // For transferFrom under delegatecall, the precompile signs as the
+    // caller frame's AUTHORITY_PDA. In our test mock the signed flag just
+    // confirms invoke_signed was used (vs unsigned invoke); the precompile-
+    // side seeds-vs-caller derivation is exercised in Phase 1.4 on Marcus.
     await token.connect(alice).approve(charlie.address, 10_000_000);
-    await token.connect(charlie).transferFrom(alice.address, bob.address, 10_000_000);
+    const tx = await token.connect(charlie).transferFrom(alice.address, bob.address, 10_000_000);
+    const rcpt = await tx.wait();
 
-    const calls = await cpi.getInvocations();
-    const transferCall = calls[calls.length - 1];
-    // The "authority" account in transfer_checked is at index 3.
-    // Mock should record that this matches charlie's PDA, NOT alice's.
-    expect(transferCall.signed).to.equal(true);
+    const calls = extractInvokeRecorded(rcpt);
+    expect(calls.length).to.equal(1);
+    expect(calls[calls.length - 1].signed).to.equal(true);
   });
 });

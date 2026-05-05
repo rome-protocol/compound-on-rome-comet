@@ -181,10 +181,118 @@
       "accountCount": 11
     }
   },
+  "vr3FollowUp": {
+    "note": "Phase 0 follow-up 2026-05-05: borrow + absorb + buyCollateral measurements. See scripts/marcus-phase0/phase0-borrow-absorb.json for full run; scripts/marcus-phase0/measure-borrow-absorb.ts and measure-buycollateral.ts for source. Borrow done both impl-direct (Comet V1, Pyth feed) and proxy-shape (CometProxy production user path); absorb + buyCollateral done on CometHarness (cometV2) with mutable SimplePriceFeed for jitoSOL price drop.",
+    "borrowImplDirect": {
+      "operation": "comet.withdraw(USDC, 700e6) on Comet V1 — 555 USDC supply withdraw + 145 pure borrow",
+      "iter1Cu": 15807,
+      "iter2Cu": 1263800,
+      "iter1Accounts": 5,
+      "iter2Accounts": 25,
+      "iter1Size": 501,
+      "iter2Size": 1014,
+      "txVersions": ["legacy", "legacy"],
+      "txHash": "0x5d9cd33e7a1e525da6b4d8fc3509fce8a5153b32a17f880bb1b0d858f02bd74a",
+      "totalCu": 1279607,
+      "headroomVsCeiling": 136200,
+      "verdict": "FITS in 1.4M ceiling but iter2 = 1.26M leaves only 136K headroom. Ship + Jito tips."
+    },
+    "borrowImplDirectIncremental": {
+      "operation": "comet.withdraw(USDC, 30e6) on already-indebted position",
+      "iter1Cu": 15807,
+      "iter2Cu": 1254639,
+      "iter1Accounts": 5,
+      "iter2Accounts": 25,
+      "txHash": "0x406e071dfb69b5226b99f0f9ed43fa533ac8e86600eee84e604b05c7b85bef56"
+    },
+    "borrowProxy": {
+      "operation": "cometProxy.withdraw(USDC, 25e6) — first borrow via production CometProxy: 1 supply + 24 pure borrow vs 5 wjitoSOL coll",
+      "iter1Cu": 16369,
+      "iter2Cu": 1278885,
+      "iter1Accounts": 5,
+      "iter2Accounts": 28,
+      "iter1Size": 502,
+      "iter2Size": 1113,
+      "txVersions": ["legacy", "legacy"],
+      "txHash": "0x7a4c10b179dd034f0643a4b0855455402a59993b754304aa2438dfecb2c65af4",
+      "totalCu": 1295254,
+      "headroomVsCeiling": 121115,
+      "deltaVsImplDirect": {
+        "iter2": 15085,
+        "deltaPct": 1.2
+      },
+      "verdict": "FITS in 1.4M ceiling. 28 accounts == MAX_KEYS_WITHOUT_ALT (28) — at the boundary; first op that touches more accounts will trigger ALT promotion (rome-sdk auto)."
+    },
+    "borrowProxyIncremental": {
+      "operation": "cometProxy.withdraw(USDC, 5e6) — incremental pure borrow",
+      "iter1Cu": 14869,
+      "iter2Cu": 1277307,
+      "iter1Accounts": 5,
+      "iter2Accounts": 28,
+      "txHash": "0xe4042d20363f3d5752ebf9ad40b75c762203ed123c959626887f60da2e6d7118"
+    },
+    "repayProxy": {
+      "operation": "cometProxy.supply(USDC, 10e6) — partial repay via supply",
+      "iter1Cu": 15807,
+      "iter2Cu": 697666,
+      "iter1Accounts": 5,
+      "iter2Accounts": 20,
+      "txHash": "0xfc05ea5ca54b2c46325ff8e3d78b740f7a1469a067fe8863e82bdc39a9b0a165",
+      "verdict": "Repay (supply on debt) is identical CU to fresh supply (~700K). Not affected by indebtedness state — interest accrual is a small extension."
+    },
+    "absorb": {
+      "operation": "cometV2.absorb(admin, [signer1]) on CometHarness with forged underwater state, 1 collateral asset (wjitoSOL) seized",
+      "iter1Cu": 14895,
+      "iter2Cu": 1066197,
+      "iter1Accounts": 5,
+      "iter2Accounts": 19,
+      "iter2Size": 816,
+      "txHash": "0xf38584923c36d40411e61bd44437dbbbdb43c6e33a2872f5d1564e9c05fe6b7a",
+      "totalCu": 1081092,
+      "headroomVsCeiling": 333803,
+      "verdict": "FITS comfortably. Single-asset seize. Multi-asset absorb (e.g. 5 collaterals) would scale, but Compound's absorb loop is bounded by numAssets which is config-time-set."
+    },
+    "buyCollateral": {
+      "operation": "cometV2.buyCollateral(jitoSOL, 0.05e9 min, 5e6 USDC, admin) — spot buy from absorbed reserves",
+      "iter1Cu": 16395,
+      "iter2Cu": 923607,
+      "iter1Accounts": 5,
+      "iter2Accounts": 24,
+      "txHash": "0x0c7b1069355f71e127a06ba1a021eb4365d03537356847192ba4fb1375a28317",
+      "verdict": "FITS. Less than borrow's 1.27M iter2. 24 accounts; under the 28 ALT threshold."
+    },
+    "harnessUtilities": {
+      "note": "Not user-facing ops; CometHarness ledger writes used to forge signer1's underwater position cheaply. Each is single-Solana-tx (atomic), not iterative.",
+      "setCollateralBalance": { "cu": 287267, "accounts": 11 },
+      "setBasePrincipal": { "cu": 140621, "accounts": 10 },
+      "setTotalsBasic": { "iter1Cu": 16395, "iter2Cu": 218221, "accounts": [5, 11] },
+      "setTotalsCollateral": { "cu": 172618, "accounts": 10 }
+    },
+    "emulatorComparison": {
+      "status": "deferred",
+      "reason": "rome_emulateTx on Marcus current build expects RLP-encoded signed raw tx as a string param, not a tx-object map. Building signed-raw txs for unsigned-call testing is non-trivial. All measurements above are real on-chain ground truth. Per Phase 0 memo §VR-3, emulator/real CU comparison was a 'soft' goal not a gate."
+    },
+    "phase1Implications": {
+      "iter2HeadroomVsCeiling": {
+        "supply": "699K headroom (700K vs 1.4M)",
+        "borrowImpl": "136K headroom (1.26M vs 1.4M) — TIGHT",
+        "borrowProxy": "121K headroom (1.28M vs 1.4M) — TIGHT",
+        "absorb": "334K headroom (1.07M vs 1.4M)",
+        "buyCollateral": "476K headroom (0.92M vs 1.4M)"
+      },
+      "altThreshold": {
+        "currentBorrowProxyAccounts": 28,
+        "altLimit": 28,
+        "interpretation": "Borrow currently sits AT the ALT promotion threshold. Adding ANY new account (e.g. unified-USDC's MetaHook frame, or extra precompile) will trigger ALT promotion in rome-sdk. ALT path is wired but not exercised by Compound today; this changes in Phase 1."
+      },
+      "jitoTipRecommendation": "Confirmed: borrow's 1.27M iter2 with 121K headroom is exactly the kind of tail iteration that needs Jito tip submission for reliable mainnet landing. Phase 1 dispatch parameters from §VR-6 stand."
+    }
+  },
   "notes": [
     "Original 2026-05-04 run: CometProxy + CometRewards failed mollusk Custom(1) — root cause turned out to be empty rome-sdk proxy keypairs (3 of 3), NOT an emulator bug.",
     "After 2026-05-05 keypair funding (~9.9 SOL each), CometProxy + CometRewards deployed cleanly on first attempt. CometFactory also confirmed live (was in fact deployed in the original run despite 12-retry log noise).",
-    "Original measurements run directly against the Comet impl bytecode for VR-3 — same opcodes for runtime ops. Production shape now verified through CometProxy with +6.6% CU overhead (746,994 vs 700,809).",
-    "Blocker #1 (mollusk emulator drift) CLOSED — see Phase 0 memo addendum for closure note."
+    "Original measurements run directly against the Comet impl bytecode for VR-3 — same opcodes for runtime ops. Production shape now verified through CometProxy with +6.6% CU overhead (746,994 vs 700,809) for supply.",
+    "Blocker #1 (mollusk emulator drift) CLOSED — see Phase 0 memo addendum for closure note.",
+    "VR-3 borrow + absorb follow-up captured 2026-05-05. Borrow proxy iter2=1,278,885 CU sits at 28 accounts == MAX_KEYS_WITHOUT_ALT — ALT promotion threshold met; ANY new account in Phase 1 (e.g. unified-USDC's MetaHook frame) triggers ALT. Absorb 1,066,197 CU. buyCollateral 923,607 CU. All fit 1.4M ceiling but borrow iter2 has only 121K CU headroom — Jito tips on iter2 are required, not optional, for reliable mainnet landing."
   ]
 }

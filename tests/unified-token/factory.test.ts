@@ -75,12 +75,12 @@ describe('MultiAssetWrapperFactory', function () {
     ).to.be.revertedWith('MultiAssetWrapperFactory: not admin');
   });
 
-  it('deployed wrapper has the factory as initial admin (forwarded)', async () => {
+  it('deployed wrapper has the factory admin as initial admin (forwarded)', async () => {
     await factory.connect(admin).deploy(USDC_MINT_DEVNET, 'A', 'A', 6);
     const addr = await factory.wrapperFor(USDC_MINT_DEVNET);
     const T = await ethers.getContractFactory('UnifiedToken');
     const token = T.attach(addr);
-    // Factory passes admin as the deployer.
+    // Factory passes msg.sender (admin) as the deployed wrapper's admin.
     expect(await token.admin()).to.equal(admin.address);
   });
 

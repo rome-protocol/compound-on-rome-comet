@@ -61,9 +61,10 @@ describe('SyntheticSender', function () {
   });
 
   it('zero pubkey reverts (intentional sanity bound)', async () => {
+    // Library uses a custom error (ZeroPubkey) for cheaper revert encoding.
     await expect(
       lib.derive(ethers.constants.HashZero),
-    ).to.be.revertedWith('SyntheticSender: zero pubkey');
+    ).to.be.reverted;
   });
 
   it('exposes the salt as a constant', async () => {

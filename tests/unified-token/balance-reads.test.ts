@@ -33,6 +33,7 @@ describe('UnifiedToken — balance reads', function () {
       'Unified USDC',
       'USDC',
       6, // decimals
+      owner.address,
     );
     await token.deployed();
   });

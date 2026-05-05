@@ -24,17 +24,18 @@ describe('UnifiedToken — parameterized mint isolation', function () {
   let jupUsdToken: any;
   let sys: any;
   let cpi: any;
+  let admin: any;
   let alice: any;
   let bob: any;
 
   beforeEach(async () => {
-    [, alice, bob] = await ethers.getSigners();
+    [admin, alice, bob] = await ethers.getSigners();
     ({ sys, cpi } = await installMockPrecompiles());
 
     const T = await ethers.getContractFactory('UnifiedToken');
-    usdcToken = await T.deploy(USDC_MINT_DEVNET, 'Unified USDC', 'USDC', 6);
-    usdsToken = await T.deploy(USDS_MINT_PLACEHOLDER, 'Unified USDS', 'USDS', 6);
-    jupUsdToken = await T.deploy(JUPUSD_MINT_PLACEHOLDER, 'Unified JupUSD', 'JupUSD', 6);
+    usdcToken = await T.deploy(USDC_MINT_DEVNET, 'Unified USDC', 'USDC', 6, admin.address);
+    usdsToken = await T.deploy(USDS_MINT_PLACEHOLDER, 'Unified USDS', 'USDS', 6, admin.address);
+    jupUsdToken = await T.deploy(JUPUSD_MINT_PLACEHOLDER, 'Unified JupUSD', 'JupUSD', 6, admin.address);
   });
 
   it('three instances are distinct contract addresses', async () => {
@@ -73,14 +74,14 @@ describe('UnifiedToken — parameterized mint isolation', function () {
   it('reverts at constructor when mint_id is zero', async () => {
     const T = await ethers.getContractFactory('UnifiedToken');
     await expect(
-      T.deploy(ethers.constants.HashZero, 'Bad', 'BAD', 6),
+      T.deploy(ethers.constants.HashZero, 'Bad', 'BAD', 6, admin.address),
     ).to.be.revertedWith('UnifiedToken: mint cannot be zero');
   });
 
   it('reverts at constructor when decimals > 18 (sanity bound)', async () => {
     const T = await ethers.getContractFactory('UnifiedToken');
     await expect(
-      T.deploy(USDC_MINT_DEVNET, 'Bad', 'BAD', 19),
+      T.deploy(USDC_MINT_DEVNET, 'Bad', 'BAD', 19, admin.address),
     ).to.be.revertedWith('UnifiedToken: decimals out of range');
   });
 });
