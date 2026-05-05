@@ -172,32 +172,64 @@ contract UnifiedToken is ICrossVMAsset, EIP712, ReentrancyGuard, IERC165 {
         returns (bool)
     {
         _spendAllowance(from, msg.sender, value);
-        // The CPI that empties `from`'s ATA is signed as the spender's
-        // authority PDA. For this to succeed on Solana, `from` must have
-        // executed a prior approve-checked CPI targeting the spender's PDA
-        // as delegate (separate flow — typically done via permit + a one-shot
-        // setup tx, or pre-arranged on the Solana lane). Until then, the SPL
-        // CPI fails at the delegate-check stage.
-        _transferViaCpi(from, to, value);
+        // Phase 2: `from`'s prior `approve(spender=msg.sender, ...)` set up
+        // both the EVM allowance AND the SPL-side delegation: the call
+        // CPIed to SPL Token's `Approve`, granting AUTHORITY_PDA(msg.sender)
+        // delegate authority on `from`'s ATA up to the approved amount.
+        // The CPI below issues `transfer_checked` signed as AUTHORITY_PDA(msg.sender)
+        // — SPL Token honors the prior delegation and the transfer succeeds.
+        _transferViaCpiAsSpender(from, to, value, msg.sender);
         emit Transfer(from, to, value);
         return true;
     }
 
-    function approve(address spender, uint256 value) public override returns (bool) {
+    /// @notice Sets EVM-side allowance AND mirrors as an SPL delegate on Solana.
+    /// @dev Phase 2 (operator decision 2026-05-05): approve does double duty.
+    ///      1. Sets _allowances[msg.sender][spender] (standard ERC-20).
+    ///      2. CPIs to SPL Token's `Approve` instruction so msg.sender's
+    ///         AUTHORITY_PDA grants `AUTHORITY_PDA(spender)` delegate authority
+    ///         on the source ATA, with the same amount.
+    ///      3. When value=0, CPIs to SPL Token's `Revoke` to clear the SPL
+    ///         delegate; otherwise stale on-chain delegations would persist.
+    ///      Result: Compound's `transferFrom(user, comet, amount)` now works
+    ///      end-to-end without a separate Solana wallet step. The CPI in
+    ///      transferFrom signs as AUTHORITY_PDA(comet); the SPL delegate set
+    ///      up here authorizes that exact PDA.
+    function approve(address spender, uint256 value) public override nonReentrant returns (bool) {
         _approve(msg.sender, spender, value);
+        if (value == 0) {
+            _revokeSplDelegate();
+        } else {
+            _approveSplDelegate(spender, value);
+        }
         return true;
     }
 
-    function increaseAllowance(address spender, uint256 added) public returns (bool) {
-        _approve(msg.sender, spender, _allowances[msg.sender][spender] + added);
+    function increaseAllowance(address spender, uint256 added) public nonReentrant returns (bool) {
+        uint256 newAllowance = _allowances[msg.sender][spender] + added;
+        _approve(msg.sender, spender, newAllowance);
+        // SPL delegate: re-issue Approve with the new total. SPL Token's
+        // Approve overwrites the existing delegate amount (it does not
+        // accumulate), so we pass newAllowance.
+        if (newAllowance == 0) {
+            _revokeSplDelegate();
+        } else {
+            _approveSplDelegate(spender, newAllowance);
+        }
         return true;
     }
 
-    function decreaseAllowance(address spender, uint256 subtracted) public returns (bool) {
+    function decreaseAllowance(address spender, uint256 subtracted) public nonReentrant returns (bool) {
         uint256 current = _allowances[msg.sender][spender];
         require(current >= subtracted, "ERC20: decreased allowance below zero");
         unchecked {
-            _approve(msg.sender, spender, current - subtracted);
+            uint256 newAllowance = current - subtracted;
+            _approve(msg.sender, spender, newAllowance);
+            if (newAllowance == 0) {
+                _revokeSplDelegate();
+            } else {
+                _approveSplDelegate(spender, newAllowance);
+            }
         }
         return true;
     }
@@ -307,6 +339,15 @@ contract UnifiedToken is ICrossVMAsset, EIP712, ReentrancyGuard, IERC165 {
     // ERC-2612 permit
     // ────────────────────────────────────────────────────────────────────
 
+    /// @notice ERC-2612 signed approval. Sets EVM allowance ONLY — does not
+    /// CPI to SPL Token's Approve. Rationale: permit's signing key is the
+    /// EVM private key, which is not the AUTHORITY_PDA owner — there's no
+    /// way for permit to sign as AUTHORITY_PDA(owner) on Solana without an
+    /// additional Solana-side action by the owner. Use `approve()` directly
+    /// (called by msg.sender == owner) when SPL delegation is needed.
+    /// Compound's standard supply path uses approve() not permit, so this
+    /// works for the demo. If a permit-based flow is needed, the caller
+    /// must do a separate `approve()` follow-up to set the SPL delegate.
     function permit(
         address owner,
         address spender,
@@ -354,27 +395,40 @@ contract UnifiedToken is ICrossVMAsset, EIP712, ReentrancyGuard, IERC165 {
     // Internal: CPI to SPL Token transfer_checked
     // ────────────────────────────────────────────────────────────────────
 
-    /// Issues a signed CPI to SPL Token's `transfer_checked` instruction.
+    /// Issues a signed CPI to SPL Token's `transfer_checked` instruction
+    /// where the authority signer is AUTHORITY_PDA(`from`) — i.e. the source
+    /// owner is signing. Used by direct `transfer()`.
     /// Source ATA = AUTHORITY_PDA(`from`)'s ATA for this mint.
     /// Destination ATA = AUTHORITY_PDA(`to`)'s ATA for this mint.
-    /// Authority signer = AUTHORITY_PDA(`spender`) — for `transfer`, spender
-    /// is `from`; for `transferFrom`, spender is msg.sender (after allowance
-    /// check).
     function _transferViaCpi(address from, address to, uint256 value) internal {
+        _transferViaCpiAsSpender(from, to, value, from);
+    }
+
+    /// Issues a signed CPI to SPL Token's `transfer_checked` where the
+    /// authority signer is AUTHORITY_PDA(`spender`). Used by `transferFrom`
+    /// where the spender (a delegate established via `approve`) initiates the
+    /// transfer of `from`'s funds. SPL Token's transfer_checked verifies the
+    /// signing authority is either the ATA owner OR a registered delegate.
+    function _transferViaCpiAsSpender(
+        address from,
+        address to,
+        uint256 value,
+        address spender
+    ) internal {
         require(to != address(0), "ERC20: transfer to the zero address");
         require(value <= type(uint64).max, "UnifiedToken: amount exceeds uint64");
 
         bytes32 fromAta = AtaDeriver.ataForUser(from, mintId);
         bytes32 toAta = AtaDeriver.ataForUser(to, mintId);
-        bytes32 fromPda = AtaDeriver.authorityPda(from);
+        bytes32 spenderPda = AtaDeriver.authorityPda(spender);
 
-        // Build accounts for transfer_checked (no signers list).
+        // Build accounts for transfer_checked.
         ICrossProgramInvocation.AccountMeta[] memory accounts =
             new ICrossProgramInvocation.AccountMeta[](4);
         accounts[0] = ICrossProgramInvocation.AccountMeta(fromAta, false, true);
         accounts[1] = ICrossProgramInvocation.AccountMeta(mintId, false, false);
         accounts[2] = ICrossProgramInvocation.AccountMeta(toAta, false, true);
-        accounts[3] = ICrossProgramInvocation.AccountMeta(fromPda, true, false);
+        accounts[3] = ICrossProgramInvocation.AccountMeta(spenderPda, true, false);
 
         // transfer_checked tag = 12, then u64 LE amount, then u8 decimals.
         bytes memory data = bytes.concat(
@@ -393,6 +447,77 @@ contract UnifiedToken is ICrossVMAsset, EIP712, ReentrancyGuard, IERC165 {
         // caller of UnifiedToken.transfer/transferFrom. That's the desired
         // signer (the spender / the from-address). Same pattern as
         // SPL_ERC20._transfer in rome-solidity.
+        (bool success, bytes memory result) = CPI_PROGRAM_ADDRESS.delegatecall(
+            abi.encodeWithSignature(
+                "invoke_signed(bytes32,(bytes32,bool,bool)[],bytes,bytes32[])",
+                SolanaConstants.SPL_TOKEN_PROGRAM,
+                accounts,
+                data,
+                seeds
+            )
+        );
+        require(success, _revertMsg(result));
+    }
+
+    /// CPIs to SPL Token's `Approve` instruction.
+    /// Owner = AUTHORITY_PDA(msg.sender) (signs).
+    /// Source ATA = AUTHORITY_PDA(msg.sender)'s ATA for this mint.
+    /// Delegate = AUTHORITY_PDA(spender). When the spender later calls
+    /// transferFrom, the CPI is signed as AUTHORITY_PDA(spender) and SPL
+    /// Token honors the delegation.
+    /// SPL Approve instruction tag = 4, payload = u64 LE amount.
+    /// @dev If the EVM allowance is greater than u64::MAX (e.g. `type(uint256).max`
+    /// for "infinite" allowance), we cap the SPL delegate at u64::MAX. SPL Token's
+    /// transfer_checked will then succeed for any single transfer up to u64::MAX,
+    /// which exceeds any realistic per-call amount; the EVM allowance is the
+    /// authoritative cap for accumulated transfers.
+    function _approveSplDelegate(address spender, uint256 amount) internal {
+        uint64 splAmount = amount > type(uint64).max
+            ? type(uint64).max
+            : uint64(amount);
+        bytes32 ownerAta = AtaDeriver.ataForUser(msg.sender, mintId);
+        bytes32 ownerPda = AtaDeriver.authorityPda(msg.sender);
+        bytes32 delegatePda = AtaDeriver.authorityPda(spender);
+
+        ICrossProgramInvocation.AccountMeta[] memory accounts =
+            new ICrossProgramInvocation.AccountMeta[](3);
+        accounts[0] = ICrossProgramInvocation.AccountMeta(ownerAta, false, true);
+        accounts[1] = ICrossProgramInvocation.AccountMeta(delegatePda, false, false);
+        accounts[2] = ICrossProgramInvocation.AccountMeta(ownerPda, true, false);
+
+        bytes memory data = bytes.concat(
+            bytes1(uint8(4)),
+            _u64Le(splAmount)
+        );
+
+        bytes32[] memory seeds = new bytes32[](0);
+        (bool success, bytes memory result) = CPI_PROGRAM_ADDRESS.delegatecall(
+            abi.encodeWithSignature(
+                "invoke_signed(bytes32,(bytes32,bool,bool)[],bytes,bytes32[])",
+                SolanaConstants.SPL_TOKEN_PROGRAM,
+                accounts,
+                data,
+                seeds
+            )
+        );
+        require(success, _revertMsg(result));
+    }
+
+    /// CPIs to SPL Token's `Revoke` instruction.
+    /// Source ATA = AUTHORITY_PDA(msg.sender)'s ATA for this mint.
+    /// Owner = AUTHORITY_PDA(msg.sender) (signs).
+    /// SPL Revoke instruction tag = 5, no payload.
+    function _revokeSplDelegate() internal {
+        bytes32 ownerAta = AtaDeriver.ataForUser(msg.sender, mintId);
+        bytes32 ownerPda = AtaDeriver.authorityPda(msg.sender);
+
+        ICrossProgramInvocation.AccountMeta[] memory accounts =
+            new ICrossProgramInvocation.AccountMeta[](2);
+        accounts[0] = ICrossProgramInvocation.AccountMeta(ownerAta, false, true);
+        accounts[1] = ICrossProgramInvocation.AccountMeta(ownerPda, true, false);
+
+        bytes memory data = bytes.concat(bytes1(uint8(5)));
+        bytes32[] memory seeds = new bytes32[](0);
         (bool success, bytes memory result) = CPI_PROGRAM_ADDRESS.delegatecall(
             abi.encodeWithSignature(
                 "invoke_signed(bytes32,(bytes32,bool,bool)[],bytes,bytes32[])",

@@ -113,12 +113,75 @@ describe('UnifiedToken — allowances (EVM-side)', function () {
     expect(await token.allowance(alice.address, bob.address)).to.equal(50_000_000);
   });
 
-  it('does NOT issue a Solana SPL approve CPI', async () => {
-    // The whole point of EVM-side allowances: zero CPI on approve.
+  it('approve() issues exactly one SPL Approve CPI (delegate setup)', async () => {
+    // Phase 2 (operator decision 2026-05-05): approve does double duty —
+    // EVM allowance mapping AND SPL-side delegate via CPI to SPL Token's
+    // Approve instruction (tag = 4). This is what makes Compound's
+    // standard transferFrom flow work end-to-end.
     const tx = await token.connect(alice).approve(bob.address, 100_000_000);
     const rcpt = await tx.wait();
     const TOPIC0 = ethers.utils.id('InvokeRecorded(bytes32,bool,bytes32,uint256)');
     const cpiLogs = rcpt.logs.filter((l: any) => l.topics[0] === TOPIC0);
-    expect(cpiLogs.length).to.equal(0);
+    expect(cpiLogs.length).to.equal(1);
+    // signed=true (the CPI is invoke_signed, signing as AUTHORITY_PDA(alice))
+    expect(ethers.BigNumber.from(cpiLogs[0].topics[2]).isZero()).to.equal(false);
+    // programId topic = SPL Token program (Tokenkeg)
+    expect(cpiLogs[0].topics[1]).to.equal(
+      '0x06ddf6e1d765a193d9cbe146ceeb79ac1cb485ed5f5b37913a8cf5857eff00a9',
+    );
+  });
+
+  it('approve(0) issues exactly one SPL Revoke CPI (delegate clear)', async () => {
+    // Set up a non-zero delegate first.
+    await token.connect(alice).approve(bob.address, 50_000_000);
+    // Now zero it — should fire a Revoke (tag=5), not an Approve (tag=4).
+    const tx = await token.connect(alice).approve(bob.address, 0);
+    const rcpt = await tx.wait();
+    const TOPIC0 = ethers.utils.id('InvokeRecorded(bytes32,bool,bytes32,uint256)');
+    const cpiLogs = rcpt.logs.filter((l: any) => l.topics[0] === TOPIC0);
+    expect(cpiLogs.length).to.equal(1);
+    expect(cpiLogs[0].topics[1]).to.equal(
+      '0x06ddf6e1d765a193d9cbe146ceeb79ac1cb485ed5f5b37913a8cf5857eff00a9',
+    );
+  });
+
+  it('increaseAllowance issues exactly one SPL Approve CPI with new total', async () => {
+    await token.connect(alice).approve(bob.address, 50_000_000);
+    const tx = await token.connect(alice).increaseAllowance(bob.address, 30_000_000);
+    const rcpt = await tx.wait();
+    expect(await token.allowance(alice.address, bob.address)).to.equal(80_000_000);
+    const TOPIC0 = ethers.utils.id('InvokeRecorded(bytes32,bool,bytes32,uint256)');
+    const cpiLogs = rcpt.logs.filter((l: any) => l.topics[0] === TOPIC0);
+    expect(cpiLogs.length).to.equal(1);
+  });
+
+  it('decreaseAllowance to non-zero issues an SPL Approve with new total', async () => {
+    await token.connect(alice).approve(bob.address, 50_000_000);
+    const tx = await token.connect(alice).decreaseAllowance(bob.address, 30_000_000);
+    const rcpt = await tx.wait();
+    expect(await token.allowance(alice.address, bob.address)).to.equal(20_000_000);
+    const TOPIC0 = ethers.utils.id('InvokeRecorded(bytes32,bool,bytes32,uint256)');
+    const cpiLogs = rcpt.logs.filter((l: any) => l.topics[0] === TOPIC0);
+    expect(cpiLogs.length).to.equal(1);
+  });
+
+  it('decreaseAllowance to zero issues an SPL Revoke', async () => {
+    await token.connect(alice).approve(bob.address, 50_000_000);
+    const tx = await token.connect(alice).decreaseAllowance(bob.address, 50_000_000);
+    const rcpt = await tx.wait();
+    expect(await token.allowance(alice.address, bob.address)).to.equal(0);
+    const TOPIC0 = ethers.utils.id('InvokeRecorded(bytes32,bool,bytes32,uint256)');
+    const cpiLogs = rcpt.logs.filter((l: any) => l.topics[0] === TOPIC0);
+    expect(cpiLogs.length).to.equal(1);
+  });
+
+  it('approve(uint256.max) caps SPL delegate at u64.max (no revert)', async () => {
+    const MAX = ethers.constants.MaxUint256;
+    const tx = await token.connect(alice).approve(bob.address, MAX);
+    const rcpt = await tx.wait();
+    expect(await token.allowance(alice.address, bob.address)).to.equal(MAX);
+    const TOPIC0 = ethers.utils.id('InvokeRecorded(bytes32,bool,bytes32,uint256)');
+    const cpiLogs = rcpt.logs.filter((l: any) => l.topics[0] === TOPIC0);
+    expect(cpiLogs.length).to.equal(1);
   });
 });
