@@ -9,6 +9,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      # hardhat.config.ts requireEnv() defaults — values are unused for compile/test;
+      # only relevant for live-network ops (Etherscan verify, fork tests). Set to
+      # placeholders so hardhat boots in CI without the upstream Compound secrets.
+      ETHERSCAN_KEY: skip
+      SNOWTRACE_KEY: skip
+      MAINNET_QUICKNODE_LINK: https://example.invalid
+      UNICHAIN_QUICKNODE_LINK: https://example.invalid
+      LINEA_QUICKNODE_LINK: https://example.invalid
     steps:
       - uses: actions/checkout@v4
         with:
