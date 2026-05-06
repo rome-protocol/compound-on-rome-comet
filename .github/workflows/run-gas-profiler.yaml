@@ -16,7 +16,7 @@ jobs:
       ETHERSCAN_KEY_FOR_LINEA: ${{ secrets.ETHERSCAN_KEY_FOR_LINEA }}
       SNOWTRACE_KEY: ${{ secrets.SNOWTRACE_KEY || 'skip' }}
       INFURA_KEY: ${{ secrets.INFURA_KEY }}
-      MAINNET_QUICKNODE_LINK: ${{ secrets.MAINNET_QUICKNODE_LINK || 'https://example.invalid' }}
+      MAINNET_QUICKNODE_LINK: ${{ secrets.MAINNET_QUICKNODE_LINK || 'https://eth.llamarpc.com' }}
       SEPOLIA_QUICKNODE_LINK: ${{ secrets.SEPOLIA_QUICKNODE_LINK }}
       RONIN_QUICKNODE_LINK: ${{ secrets.RONIN_QUICKNODE_LINK }}
       POLYGON_QUICKNODE_LINK: ${{ secrets.POLYGON_QUICKNODE_LINK }}
