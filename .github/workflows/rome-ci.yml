@@ -34,7 +34,7 @@ jobs:
         run: yarn install --non-interactive --frozen-lockfile
 
       - name: Forge build
-        run: forge build --sizes
+        run: forge build
 
       - name: Hardhat compile
         run: npx hardhat compile
