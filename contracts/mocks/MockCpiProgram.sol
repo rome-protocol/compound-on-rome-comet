@@ -117,7 +117,6 @@ contract MockCpiProgram {
         uint64 v = 0;
         unchecked {
             for (uint256 i = 0; i < 8; ++i) {
-                // nosemgrep: rules.solidity.security.missing-assignment
                 v |= uint64(uint8(data[uint256(offset) + i])) << uint64(i * 8);
             }
         }
@@ -207,8 +206,6 @@ contract MockCpiProgram {
     /// account that still has stale data, or a non-rent-exempt account).
     /// Test-only mock setter — intentionally unguarded, same shape as the
     /// pre-existing `setAccountData` / `setReentrancyAttack` helpers above.
-    // nosemgrep: compound.solidity.privileged-func-lacks-access-control
-    // nosemgrep: compound.solidity.state-changing-func-does-not-emit-event
     function setAccountLamports(bytes32 pubkey, uint64 lamports) external {
         accountLamports[pubkey] = lamports;
     }
