@@ -33,6 +33,17 @@ interface ICrossProgramInvocation {
         bool is_signer;
         bool is_writable;
     }
+    /// Canonical result element for `pdas_batch_derive` (selector 0x944336f8).
+    /// Mirrors the upstream Solidity ABI defined in
+    /// `rome-solidity/contracts/interface.sol` (struct + function signature
+    /// verified 2026-05-15). Earlier compound-on-rome-comet revisions
+    /// declared the return as two parallel arrays `(bytes32[], uint8[])` —
+    /// that was wrong: the precompile returns an array-of-struct, and the
+    /// wrong ABI would mis-decode on-chain results.
+    struct PdaWithBump {
+        bytes32 pda;
+        uint8 bump;
+    }
     function invoke(bytes32 program_id, AccountMeta[] memory accounts, bytes memory data)
         external;
     function invoke_signed(
@@ -98,10 +109,17 @@ interface ICrossProgramInvocation {
     function derive_user_ata(address evm_user, bytes32 mint)
         external view returns (bytes32);
 
-    /// Batched PDA derivation. Each `seed_groups[i]` is a list of seed
-    /// segments; returns the (pda, bump) for each.
+    /// Batched PDA derivation (selector 0x944336f8). Each `seed_groups[i]`
+    /// is a list of seed segments; returns one `PdaWithBump` per input
+    /// group, in order. Limits enforced by the precompile: N ≤ 16 seed
+    /// groups, M ≤ 8 inner seeds per group, 32 bytes per seed.
+    ///
+    /// Canonical Solidity wrapper for this selector lives in rome-solidity
+    /// `contracts/cpi/PdasBatch.sol` (`PdasBatch.derive` + `.pair` /
+    /// `.triplet` / `.quad`). Adapters in this repo can stay self-contained
+    /// against the interface declared here; semantics match upstream.
     function pdas_batch_derive(bytes[][] memory seed_groups, bytes32 program_id)
-        external view returns (bytes32[] memory pdas, uint8[] memory bumps);
+        external view returns (PdaWithBump[] memory);
 }
 
 address constant SYSTEM_PROGRAM_ADDRESS = address(0xfF00000000000000000000000000000000000007);

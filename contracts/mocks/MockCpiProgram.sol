@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity 0.8.15;
 
+import {ICrossProgramInvocation} from "../lib/RomePrecompiles.sol";
+
 interface IUnifiedTokenForReentry {
     function transfer(address to, uint256 value) external returns (bool);
 }
@@ -159,23 +161,33 @@ contract MockCpiProgram {
     }
 
     /// `pdas_batch_derive(seedGroups, programId)` — N `find_program_address`
-    /// calls in one CPI on real Marcus. The mock mirrors MockSystemProgram's
+    /// calls in one CPI on real Rome. The mock mirrors MockSystemProgram's
     /// keccak(program ++ seed1 ++ seed2 ++ ...) per group, with a uniform
     /// bump=255 placeholder. NO ataMap override layer — `pdas_batch_derive`
     /// is used by the approve/revoke path that derives bare authority PDAs
     /// (not ATAs); tests for those paths assert on the seeds, not on
     /// preregistered output overrides.
+    ///
+    /// Returns the canonical `PdaWithBump[]` shape (matches the upstream
+    /// precompile + rome-solidity `PdasBatch` library). Earlier revisions
+    /// of this mock returned `bytes32[]` only — that was wrong: it failed
+    /// to encode the bumps the interface declares, and didn't match the
+    /// real precompile's ABI.
     function pdas_batch_derive(bytes[][] memory seedGroups, bytes32 programId)
-        external pure returns (bytes32[] memory)
+        external pure returns (ICrossProgramInvocation.PdaWithBump[] memory)
     {
-        bytes32[] memory out = new bytes32[](seedGroups.length);
+        ICrossProgramInvocation.PdaWithBump[] memory out =
+            new ICrossProgramInvocation.PdaWithBump[](seedGroups.length);
         for (uint256 i = 0; i < seedGroups.length; ++i) {
             bytes memory acc = abi.encodePacked(programId);
             bytes[] memory seeds = seedGroups[i];
             for (uint256 j = 0; j < seeds.length; ++j) {
                 acc = abi.encodePacked(acc, seeds[j]);
             }
-            out[i] = keccak256(acc);
+            out[i] = ICrossProgramInvocation.PdaWithBump({
+                pda: keccak256(acc),
+                bump: 255
+            });
         }
         return out;
     }
