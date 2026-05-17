@@ -6,7 +6,7 @@
 // testnet / mainnet).  The chainId arg drives every parameter.
 
 import { ethers } from "hardhat";
-import type { Signer } from "ethers";
+import type { Signer, ContractTransaction } from "ethers";
 import type {
   CompoundDeployment,
   DeployOutcome,
@@ -158,7 +158,7 @@ export async function deployCometVariant(args: DeployVariantArgs): Promise<Deplo
     ["function initializeStorage()"],
     args.signer,
   );
-  const initTx = await withRetry("initializeStorage", () =>
+  const initTx = await withRetry<ContractTransaction>("initializeStorage", () =>
     cometViaProxy.initializeStorage({ gasLimit: SAFE_GAS_LIMIT_INIT }),
   );
   await initTx.wait();
