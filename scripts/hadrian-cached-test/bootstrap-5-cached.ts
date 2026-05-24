@@ -8,31 +8,31 @@
 //
 // Writes addresses to scripts/hadrian-cached-test/cached-wrappers.json.
 
-import { ethers } from "hardhat";
-import * as fs from "fs";
-import * as path from "path";
+import { ethers } from 'hardhat';
+import * as fs from 'fs';
+import * as path from 'path';
 
-const FACTORY = "0xca1aad95ed6b8b798fbf5366db469d46f16aca0b"; // Hadrian ERC20SPLFactory v4
+const FACTORY = '0xca1aad95ed6b8b798fbf5366db469d46f16aca0b'; // Hadrian ERC20SPLFactory v4
 
 const FACTORY_ABI = [
-  "function create_token_mint() returns (bytes32)",
-  "function init_token_mint(bytes32 mint)",
-  "function add_spl_token_no_metadata(bytes32 mint, string name, string symbol) returns (address)",
-  "function get_current_mint(address user) view returns (bytes32, bytes32)",
-  "function token_by_mint(bytes32) view returns (address)",
+  'function create_token_mint() returns (bytes32)',
+  'function init_token_mint(bytes32 mint)',
+  'function add_spl_token_no_metadata(bytes32 mint, string name, string symbol) returns (address)',
+  'function get_current_mint(address user) view returns (bytes32, bytes32)',
+  'function token_by_mint(bytes32) view returns (address)',
 ];
 
 const WRAPPER_ABI = [
-  "function mint_to(address to, uint256 value) returns (bool)",
-  "function balanceOf(address account) view returns (uint256)",
-  "function decimals() view returns (uint8)",
+  'function mint_to(address to, uint256 value) returns (bool)',
+  'function balanceOf(address account) view returns (uint256)',
+  'function decimals() view returns (uint8)',
 ];
 
 const NEW_ASSETS = [
-  { name: "Wrapped Heat",  symbol: "wHEAT", initialSupplyDecimal: "1000000" },  // 1M
-  { name: "Wrapped Salt",  symbol: "wSALT", initialSupplyDecimal: "1000000" },
-  { name: "Wrapped Milk",  symbol: "wMILK", initialSupplyDecimal: "1000000" },
-  { name: "Wrapped Oil",   symbol: "wOIL",  initialSupplyDecimal: "1000000" },
+  { name: 'Wrapped Heat',  symbol: 'wHEAT', initialSupplyDecimal: '1000000' },  // 1M
+  { name: 'Wrapped Salt',  symbol: 'wSALT', initialSupplyDecimal: '1000000' },
+  { name: 'Wrapped Milk',  symbol: 'wMILK', initialSupplyDecimal: '1000000' },
+  { name: 'Wrapped Oil',   symbol: 'wOIL',  initialSupplyDecimal: '1000000' },
 ];
 
 async function main() {
@@ -47,7 +47,7 @@ async function main() {
 
     // Check if a wrapper for the next-derived mint already exists (idempotent skip)
     const [predictedMint] = await factory.get_current_mint(signer.address);
-    console.log(`  predicted mint: 0x${Buffer.from(ethers.utils.arrayify(predictedMint)).toString("hex")}`);
+    console.log(`  predicted mint: 0x${Buffer.from(ethers.utils.arrayify(predictedMint)).toString('hex')}`);
     const existing = await factory.token_by_mint(predictedMint);
     if (existing !== ethers.constants.AddressZero) {
       console.log(`  wrapper already exists at ${existing}; skipping bootstrap`);
@@ -64,7 +64,7 @@ async function main() {
     // 1. Create mint
     process.stdout.write(`  [1/4] factory.create_token_mint() ... `);
     let tx = await factory.create_token_mint({ gasLimit: 100_000_000 });
-    let receipt = await tx.wait();
+    await tx.wait();
     console.log(`tx=${tx.hash}`);
 
     // Re-query the mint pubkey (now stored)
@@ -79,7 +79,7 @@ async function main() {
     // 3. Add SPL token wrapper
     process.stdout.write(`  [3/4] factory.add_spl_token_no_metadata(mint, ${asset.name}, ${asset.symbol}) ... `);
     tx = await factory.add_spl_token_no_metadata(mint, asset.name, asset.symbol, { gasLimit: 100_000_000 });
-    receipt = await tx.wait();
+    await tx.wait();
     console.log(`tx=${tx.hash}`);
 
     const wrapperAddr = await factory.token_by_mint(mint);
@@ -114,8 +114,8 @@ async function main() {
     deployer: signer.address,
     wrappers: results,
   };
-  const outFile = path.join("scripts", "hadrian-cached-test", "cached-wrappers.json");
-  fs.writeFileSync(outFile, JSON.stringify(out, null, 2) + "\n");
+  const outFile = path.join('scripts', 'hadrian-cached-test', 'cached-wrappers.json');
+  fs.writeFileSync(outFile, JSON.stringify(out, null, 2) + '\n');
   console.log(`\n══════ Bootstrap COMPLETE ══════`);
   for (const w of results) {
     console.log(`  ${w.symbol}: ${w.wrapper} (mint ${w.mint.slice(0, 18)}…)`);

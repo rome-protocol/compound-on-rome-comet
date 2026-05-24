@@ -17,13 +17,17 @@
 // Captures per-action Solana metrics — particularly Phase 5 (multi-collat
 // borrow) where Comet walks all 5 collats for capacity calc.
 
-import { ethers } from "hardhat";
-import * as fs from "fs";
-import * as path from "path";
+import { ethers } from 'hardhat';
+import { BigNumber } from 'ethers';
+import * as fs from 'fs';
+import * as path from 'path';
 
-const ENSURE_TOKEN_ACCOUNT_SELECTOR = "0x5e094743";
-const ROME_RPC = "https://hadrian.testnet.romeprotocol.xyz/";
-const SOLANA_RPC = "https://node1.devnet-eu-sol-api.devnet.romeprotocol.xyz";
+// keccak256('ensure_token_account(address)')[0:4] — used in cached-wrapper
+// probe paths below if/when added. Kept as documentation reference.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _ENSURE_TOKEN_ACCOUNT_SELECTOR = '0x5e094743';
+const ROME_RPC = 'https://hadrian.testnet.romeprotocol.xyz/';
+const SOLANA_RPC = 'https://node1.devnet-eu-sol-api.devnet.romeprotocol.xyz';
 
 type Metric = {
   name: string;
@@ -37,9 +41,9 @@ type Metric = {
 
 async function rpc(url: string, method: string, params: any[]): Promise<any> {
   const r = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", method, params, id: 1 }),
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', method, params, id: 1 }),
   });
   return (await r.json() as any).result;
 }
@@ -49,9 +53,9 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function getSolanaTxWithRetry(sig: string): Promise<any> {
   for (const delay of [0, 1000, 2000, 3000, 5000]) {
     if (delay > 0) await sleep(delay);
-    const tx: any = await rpc(SOLANA_RPC, "getTransaction", [
+    const tx: any = await rpc(SOLANA_RPC, 'getTransaction', [
       sig,
-      { maxSupportedTransactionVersion: 0, encoding: "json" },
+      { maxSupportedTransactionVersion: 0, encoding: 'json' },
     ]);
     if (tx) return tx;
   }
@@ -60,7 +64,7 @@ async function getSolanaTxWithRetry(sig: string): Promise<any> {
 
 async function captureTxMetrics(txHash: string): Promise<Partial<Metric>> {
   try {
-    const sigs: string[] = (await rpc(ROME_RPC, "rome_solanaTxForEvmTx", [txHash])) ?? [];
+    const sigs: string[] = (await rpc(ROME_RPC, 'rome_solanaTxForEvmTx', [txHash])) ?? [];
     let totalCU = 0;
     let maxHeap = 0;
     let missing = 0;
@@ -89,11 +93,11 @@ async function captureTxMetrics(txHash: string): Promise<Partial<Metric>> {
 
 async function main() {
   const [signer] = await ethers.getSigners();
-  const stateFile = path.join("scripts", "hadrian-cached-test", "state-5collat.json");
+  const stateFile = path.join('scripts', 'hadrian-cached-test', 'state-5collat.json');
   if (!fs.existsSync(stateFile)) {
     throw new Error(`Run deploy-5collat.ts first.`);
   }
-  const state = JSON.parse(fs.readFileSync(stateFile, "utf8"));
+  const state = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
 
   const COMET = state.cometProxy;
   const BASE = state.baseAsset;
@@ -107,20 +111,20 @@ async function main() {
   }
 
   const ERC20_ABI = [
-    "function balanceOf(address) view returns (uint256)",
-    "function approve(address,uint256) returns (bool)",
-    "function allowance(address,address) view returns (uint256)",
-    "function transfer(address,uint256) returns (bool)",
-    "function decimals() view returns (uint8)",
+    'function balanceOf(address) view returns (uint256)',
+    'function approve(address,uint256) returns (bool)',
+    'function allowance(address,address) view returns (uint256)',
+    'function transfer(address,uint256) returns (bool)',
+    'function decimals() view returns (uint8)',
   ];
-  const WRAPPER_MINT_ABI = ["function mint_to(address to, uint256 value) returns (bool)"];
+  const WRAPPER_MINT_ABI = ['function mint_to(address to, uint256 value) returns (bool)'];
   const cometAbi = [
-    "function supply(address asset, uint256 amount)",
-    "function withdraw(address asset, uint256 amount)",
-    "function balanceOf(address account) view returns (uint256)",
-    "function borrowBalanceOf(address account) view returns (uint256)",
-    "function collateralBalanceOf(address account, address asset) view returns (uint128)",
-    "function userBasic(address account) view returns (int104, uint64, uint64, uint16 assetsIn, uint8)",
+    'function supply(address asset, uint256 amount)',
+    'function withdraw(address asset, uint256 amount)',
+    'function balanceOf(address account) view returns (uint256)',
+    'function borrowBalanceOf(address account) view returns (uint256)',
+    'function collateralBalanceOf(address account, address asset) view returns (uint128)',
+    'function userBasic(address account) view returns (int104, uint64, uint64, uint16 assetsIn, uint8)',
   ];
 
   const comet = new ethers.Contract(COMET, cometAbi, signer);
@@ -135,16 +139,16 @@ async function main() {
   //   wMILK: 1000 raw × $20  ≈ same → bump
   //   wOIL:  1000 raw × $50  ≈ same → bump
   // Actually just supply 1B raw of each so each contributes meaningful collat
-  const COLLAT_SUPPLY: Record<string, ethers.BigNumber> = {
-    wETH:  ethers.BigNumber.from("100"),               // 100 raw (8-dec) ≈ $0.003
-    wHEAT: ethers.BigNumber.from("100000000000"),      // 100 token × 1e9 = 1e11 raw, × $10 = $1000
-    wSALT: ethers.BigNumber.from("100000000000"),      // 100 × $5 = $500
-    wMILK: ethers.BigNumber.from("100000000000"),      // 100 × $20 = $2000
-    wOIL:  ethers.BigNumber.from("100000000000"),      // 100 × $50 = $5000
+  const COLLAT_SUPPLY: Record<string, BigNumber> = {
+    wETH:  ethers.BigNumber.from('100'),               // 100 raw (8-dec) ≈ $0.003
+    wHEAT: ethers.BigNumber.from('100000000000'),      // 100 token × 1e9 = 1e11 raw, × $10 = $1000
+    wSALT: ethers.BigNumber.from('100000000000'),      // 100 × $5 = $500
+    wMILK: ethers.BigNumber.from('100000000000'),      // 100 × $20 = $2000
+    wOIL:  ethers.BigNumber.from('100000000000'),      // 100 × $50 = $5000
   };
 
-  const BASE_LEND  = ethers.BigNumber.from("5000000");     // 5 wUSDC
-  const BORROW_AMT = ethers.BigNumber.from("100000");      // 0.1 wUSDC borrow
+  const BASE_LEND  = ethers.BigNumber.from('5000000');     // 5 wUSDC
+  const BORROW_AMT = ethers.BigNumber.from('100000');      // 0.1 wUSDC borrow
 
   const passed: string[] = [];
   const failed: string[] = [];
@@ -157,13 +161,13 @@ async function main() {
       const maybeHash = await fn();
       const wallMs = Date.now() - start;
       const m: Metric = { name, wallMs };
-      if (typeof maybeHash === "string" && maybeHash.length === 66) {
+      if (typeof maybeHash === 'string' && maybeHash.length === 66) {
         Object.assign(m, await captureTxMetrics(maybeHash));
       }
       metrics.push(m);
       const detail = m.iterSigs !== undefined
         ? `sigs=${m.iterSigs} CU=${m.totalCU?.toLocaleString()} heap=${m.maxHeap?.toLocaleString()} span=${m.slotSpan}`
-        : "";
+        : '';
       console.log(`PASS (${wallMs}ms) ${detail}`);
       passed.push(`${name} (${wallMs}ms)`);
     } catch (e) {
@@ -206,7 +210,7 @@ async function main() {
   await step(`fund borrower with 5 native gas`, async () => {
     const tx = await signer.sendTransaction({
       to: borrower.address,
-      value: ethers.utils.parseEther("5"),
+      value: ethers.utils.parseEther('5'),
       gasLimit: 5_000_000,
     });
     await tx.wait();
@@ -216,7 +220,7 @@ async function main() {
   // ─── Phase 3: warm borrower's ATAs on all 6 cached wrappers ──
   console.log(`\n--- Phase 3: warm borrower ATAs ---`);
   for (const addr of [BASE.address, ...COLLATS.map((c: any) => c.address)]) {
-    const wrapper = new ethers.Contract(addr, ["function ensure_token_account(address) returns (bytes32)"], signer);
+    const wrapper = new ethers.Contract(addr, ['function ensure_token_account(address) returns (bytes32)'], signer);
     await step(`${addr.slice(0, 10)}…ensure_token_account(borrower)`, async () => {
       const tx = await wrapper.ensure_token_account(borrower.address, { gasLimit: 30_000_000 });
       await tx.wait();
@@ -235,7 +239,7 @@ async function main() {
   });
   // 4b-4e: new cached wrappers — signer is mint authority, mint directly to borrower
   for (const c of COLLATS) {
-    if (c.symbol === "wETH") continue;
+    if (c.symbol === 'wETH') continue;
     const wrapper = new ethers.Contract(c.address, WRAPPER_MINT_ABI, signer);
     await step(`${c.symbol}.mint_to(borrower, ${COLLAT_SUPPLY[c.symbol]})`, async () => {
       const tx = await wrapper.mint_to(borrower.address, COLLAT_SUPPLY[c.symbol], { gasLimit: 30_000_000 });
@@ -244,7 +248,7 @@ async function main() {
     });
   }
   // 4f: small wUSDC dust for repay interest
-  const REPAY_DUST = ethers.BigNumber.from("1000");  // bumped for interest accrual
+  const REPAY_DUST = ethers.BigNumber.from('1000');  // bumped for interest accrual
   await step(`${BASE.symbol}.transfer(borrower, ${REPAY_DUST}) [repay dust]`, async () => {
     const tx = await baseToken.transfer(borrower.address, REPAY_DUST, { gasLimit: 30_000_000 });
     await tx.wait();
@@ -276,7 +280,7 @@ async function main() {
 
   // Snapshot assetsIn bitmap to confirm all 5 collats are recorded
   const userBasic = await comet.userBasic(borrower.address);
-  console.log(`    borrower assetsIn bitmap: 0b${userBasic.assetsIn.toString(2).padStart(16, "0")} (${userBasic.assetsIn} = ${userBasic.assetsIn.toString(2).split("1").length - 1} collats)`);
+  console.log(`    borrower assetsIn bitmap: 0b${userBasic.assetsIn.toString(2).padStart(16, '0')} (${userBasic.assetsIn} = ${userBasic.assetsIn.toString(2).split('1').length - 1} collats)`);
 
   // ─── Phase 7: TRUE multi-collat borrow ───────────────────────
   console.log(`\n--- Phase 7: TRUE multi-collat borrow (HEAVY operation) ---`);
@@ -319,16 +323,16 @@ async function main() {
   if (txRows.length > 0) {
     const pad = (s: string, n: number) => s.padEnd(n);
     const padR = (s: string, n: number) => s.padStart(n);
-    console.log("  " + pad("Action", 65) + padR("wall(s)", 9) + padR("sigs", 6) + padR("Sol CU", 11) + padR("max heap", 10) + padR("slots", 7));
-    console.log("  " + "-".repeat(108));
+    console.log('  ' + pad('Action', 65) + padR('wall(s)', 9) + padR('sigs', 6) + padR('Sol CU', 11) + padR('max heap', 10) + padR('slots', 7));
+    console.log('  ' + '-'.repeat(108));
     for (const m of txRows) {
       const wallS = (m.wallMs / 1000).toFixed(1);
-      const cuStr = m.totalCU !== undefined ? m.totalCU.toLocaleString() : "-";
-      const heapStr = m.maxHeap !== undefined ? m.maxHeap.toLocaleString() : "-";
-      const span = m.slotSpan !== undefined ? String(m.slotSpan) : "-";
-      const sigs = m.iterSigs !== undefined ? String(m.iterSigs) : "-";
-      const label = m.name.length > 64 ? m.name.slice(0, 62) + "…" : m.name;
-      console.log("  " + pad(label, 65) + padR(wallS, 9) + padR(sigs, 6) + padR(cuStr, 11) + padR(heapStr, 10) + padR(span, 7));
+      const cuStr = m.totalCU !== undefined ? m.totalCU.toLocaleString() : '-';
+      const heapStr = m.maxHeap !== undefined ? m.maxHeap.toLocaleString() : '-';
+      const span = m.slotSpan !== undefined ? String(m.slotSpan) : '-';
+      const sigs = m.iterSigs !== undefined ? String(m.iterSigs) : '-';
+      const label = m.name.length > 64 ? m.name.slice(0, 62) + '…' : m.name;
+      console.log('  ' + pad(label, 65) + padR(wallS, 9) + padR(sigs, 6) + padR(cuStr, 11) + padR(heapStr, 10) + padR(span, 7));
     }
   }
 
@@ -340,7 +344,7 @@ async function main() {
 }
 
 function CACHED_WETH(state: any): string {
-  return state.collateralAssets.find((c: any) => c.symbol === "wETH").address;
+  return state.collateralAssets.find((c: any) => c.symbol === 'wETH').address;
 }
 
 main().catch((e) => {
