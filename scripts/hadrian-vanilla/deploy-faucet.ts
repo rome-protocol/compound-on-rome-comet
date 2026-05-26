@@ -32,15 +32,15 @@ const NATIVE_PER_CLAIM = 10n;    // 10 native (wei = 10e18)
 const RESERVE_CLAIMS = 4n;
 
 // Hadrian quirk: estimateGas returns near the block gasLimit (4.8e13).
-// Buffered, this blows the wallet's "balance >= gasLimit * gasPrice"
-// preflight even with 150+ native available. Cap to modest fixed values
-// per call site — the actual gas burn is two orders of magnitude lower
-// (faucet deploy ≈ 500k, native send ≈ 50k, addToken ≈ 100k, ERC20
-// transfer through cached wrapper ≈ 1.5M).
-const DEPLOY_GAS_LIMIT = 2_000_000n;
-const NATIVE_SEND_GAS_LIMIT = 200_000n;
-const ADD_TOKEN_GAS_LIMIT = 200_000n;
-const ERC20_TRANSFER_GAS_LIMIT = 3_000_000n;
+// Capping at ~30M (a fraction of the block) keeps the wallet's
+// "balance >= gasLimit * gasPrice" preflight reasonable while leaving
+// headroom for Rome's SBF-execution cost model (Compound's contracts
+// can burn ~18M for a small deploy + ~6-10M per ERC20 transfer through
+// the cached SPL wrapper because each ERC20 op CPIs into Solana).
+const DEPLOY_GAS_LIMIT = 30_000_000n;
+const NATIVE_SEND_GAS_LIMIT = 2_000_000n;
+const ADD_TOKEN_GAS_LIMIT = 5_000_000n;
+const ERC20_TRANSFER_GAS_LIMIT = 30_000_000n;
 
 // ERC20 minimal ABI for transfer + balanceOf + decimals (decimals already in state.json)
 const ERC20_ABI = [
