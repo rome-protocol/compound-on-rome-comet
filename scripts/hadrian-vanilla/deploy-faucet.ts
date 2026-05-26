@@ -31,6 +31,17 @@ const NATIVE_PER_CLAIM = 10n;    // 10 native (wei = 10e18)
 // Refill is a normal signer.sendTransaction away.
 const RESERVE_CLAIMS = 4n;
 
+// Hadrian quirk: estimateGas returns near the block gasLimit (4.8e13).
+// Buffered, this blows the wallet's "balance >= gasLimit * gasPrice"
+// preflight even with 150+ native available. Cap to modest fixed values
+// per call site — the actual gas burn is two orders of magnitude lower
+// (faucet deploy ≈ 500k, native send ≈ 50k, addToken ≈ 100k, ERC20
+// transfer through cached wrapper ≈ 1.5M).
+const DEPLOY_GAS_LIMIT = 2_000_000n;
+const NATIVE_SEND_GAS_LIMIT = 200_000n;
+const ADD_TOKEN_GAS_LIMIT = 200_000n;
+const ERC20_TRANSFER_GAS_LIMIT = 3_000_000n;
+
 // ERC20 minimal ABI for transfer + balanceOf + decimals (decimals already in state.json)
 const ERC20_ABI = [
   'function transfer(address to, uint256 amount) external returns (bool)',
@@ -63,7 +74,7 @@ async function main() {
     // when combined with the EIP-1559 gas budget). Fund the contract
     // separately below via signer.sendTransaction.
     console.log(`[1/4] Deploying CompoundFaucet (gasDrop=${NATIVE_PER_CLAIM} native, seed later)...`);
-    const faucet = await deployContract<Contract>(Faucet, [gasDropWei]);
+    const faucet = await deployContract<Contract>(Faucet, [gasDropWei], { gasLimit: DEPLOY_GAS_LIMIT });
     faucetAddress = faucet.address;
     console.log(`    Faucet: ${faucetAddress}`);
   } else {
@@ -75,7 +86,7 @@ async function main() {
   if (currentReserve < seedNative) {
     const need = seedNative - currentReserve;
     console.log(`[1b/4] Funding faucet with ${need} wei native (current=${currentReserve}, target=${seedNative})`);
-    await sendTx(deployer, { to: faucetAddress, value: need });
+    await sendTx(deployer, { to: faucetAddress, value: need, gasLimit: NATIVE_SEND_GAS_LIMIT });
   } else {
     console.log(`[1b/4] Native reserve already ${currentReserve} ≥ target ${seedNative}, skipping`);
   }
@@ -100,7 +111,7 @@ async function main() {
       continue;
     }
     console.log(`[3/4] addToken(${c.symbol}=${c.address}, drop=${drop})...`);
-    await callTx(faucet, 'addToken', [c.address, drop]);
+    await callTx(faucet, 'addToken', [c.address, drop], { gasLimit: ADD_TOKEN_GAS_LIMIT });
   }
 
   // ── 3. Pre-fund each token to RESERVE_CLAIMS × drop ─────────────────
@@ -115,7 +126,7 @@ async function main() {
     }
     const need = target - current;
     console.log(`[4/4] Transferring ${need} ${c.symbol} to faucet (current=${current}, target=${target})`);
-    await callTx(token, 'transfer', [faucetAddress!, need]);
+    await callTx(token, 'transfer', [faucetAddress!, need], { gasLimit: ERC20_TRANSFER_GAS_LIMIT });
   }
 
   // ── Write back to state.json ────────────────────────────────────────
