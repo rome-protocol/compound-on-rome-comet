@@ -109,5 +109,41 @@
   "sources": {
     "wrapperFactoryV6": "0x86149124d74ebb3aa41a19641b700e88202b6285",
     "oracleGatewayV2Factory": "0x9be249718c5c066d98fead6bfbb214ca0787f870"
+  },
+  "faucet": {
+    "address": "0x878251BC3DB302E4915b720b948cBc6107eC479c",
+    "gasDropWei": "10000000000000000000",
+    "tokens": [
+      {
+        "symbol": "wHEAT",
+        "address": "0x58e78208c8EDd4b9E8e49682701512dd2Ae63dB5",
+        "decimals": 9,
+        "dropAmountWei": "100000000000"
+      },
+      {
+        "symbol": "wSALT",
+        "address": "0x29CC524CEab4C72b064368c3c3cbDd6F2a68b45e",
+        "decimals": 9,
+        "dropAmountWei": "100000000000"
+      },
+      {
+        "symbol": "wMILK",
+        "address": "0x9E522120c5cC83375D6158ecdB9C99F103BDdAD9",
+        "decimals": 9,
+        "dropAmountWei": "100000000000"
+      },
+      {
+        "symbol": "wOIL",
+        "address": "0x5AadDB6957D3CA334A8634D848e61d0130cDe139",
+        "decimals": 9,
+        "dropAmountWei": "100000000000"
+      },
+      {
+        "symbol": "wGOLD",
+        "address": "0x585Ac6B26329A414D2b3c34E2B599620Af78A7ab",
+        "decimals": 9,
+        "dropAmountWei": "100000000000"
+      }
+    ]
   }
 }

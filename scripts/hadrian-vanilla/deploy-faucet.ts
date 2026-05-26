@@ -44,7 +44,7 @@ const RESERVE_CLAIMS = 4n;
 // deployer's ~150 native balance.
 const DEPLOY_GAS_LIMIT = 20_000_000n;
 const NATIVE_SEND_GAS_LIMIT = 1_000_000n;
-const ADD_TOKEN_GAS_LIMIT = 2_000_000n;
+const ADD_TOKEN_GAS_LIMIT = 8_000_000n;
 const ERC20_TRANSFER_GAS_LIMIT = 12_000_000n;
 
 // ERC20 minimal ABI for transfer + balanceOf + decimals (decimals already in state.json)
