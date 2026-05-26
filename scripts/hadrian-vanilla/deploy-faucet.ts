@@ -37,10 +37,15 @@ const RESERVE_CLAIMS = 4n;
 // headroom for Rome's SBF-execution cost model (Compound's contracts
 // can burn ~18M for a small deploy + ~6-10M per ERC20 transfer through
 // the cached SPL wrapper because each ERC20 op CPIs into Solana).
-const DEPLOY_GAS_LIMIT = 30_000_000n;
-const NATIVE_SEND_GAS_LIMIT = 2_000_000n;
-const ADD_TOKEN_GAS_LIMIT = 5_000_000n;
-const ERC20_TRANSFER_GAS_LIMIT = 30_000_000n;
+// Tuned against Hadrian: deploy was empirically 18.6M, cached-wrapper
+// transfer ~10M. Setting just over actual need so the wallet's
+// budget-check multiplier (Rome appears to scale gas budget by a
+// large factor for OutOfFund preflight) stays survivable against the
+// deployer's ~150 native balance.
+const DEPLOY_GAS_LIMIT = 20_000_000n;
+const NATIVE_SEND_GAS_LIMIT = 1_000_000n;
+const ADD_TOKEN_GAS_LIMIT = 2_000_000n;
+const ERC20_TRANSFER_GAS_LIMIT = 12_000_000n;
 
 // ERC20 minimal ABI for transfer + balanceOf + decimals (decimals already in state.json)
 const ERC20_ABI = [
