@@ -23,7 +23,11 @@ const STATE_PATH = path.resolve(__dirname, 'state.json');
 const MOCK_SYMBOLS = ['wHEAT', 'wSALT', 'wMILK', 'wOIL', 'wGOLD'] as const;
 const TOKENS_PER_CLAIM = 100n;   // human units
 const NATIVE_PER_CLAIM = 10n;    // 10 native (wei = 10e18)
-const RESERVE_CLAIMS = 1000n;    // pre-fund a thousand claims
+// Tight initial seed — operator deployer wallet only has ~44 native at
+// time of first deploy, so seeding 1000 claims would OutOfFund. Refill
+// is a normal ERC20.transfer / signer.sendTransaction away; no contract
+// change needed.
+const RESERVE_CLAIMS = 4n;
 
 // ERC20 minimal ABI for transfer + balanceOf + decimals (decimals already in state.json)
 const ERC20_ABI = [
