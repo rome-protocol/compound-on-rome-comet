@@ -78,8 +78,13 @@ async function main() {
     // txs with non-zero value (chain-side OutOfFund check is too tight
     // when combined with the EIP-1559 gas budget). Fund the contract
     // separately below via signer.sendTransaction.
+    // Hadrian: baseFee=0, priorityFee=0 — explicitly pass legacy tx +
+    // gasPrice=0 to short-circuit Rome's preflight budget calculation
+    // (which seems to scale gas with a multiplier we can't see). Same
+    // for the other txs below.
+    const legacyZero = { gasLimit: DEPLOY_GAS_LIMIT, type: 0, gasPrice: 0n };
     console.log(`[1/4] Deploying CompoundFaucet (gasDrop=${NATIVE_PER_CLAIM} native, seed later)...`);
-    const faucet = await deployContract<Contract>(Faucet, [gasDropWei], { gasLimit: DEPLOY_GAS_LIMIT });
+    const faucet = await deployContract<Contract>(Faucet, [gasDropWei], legacyZero);
     faucetAddress = faucet.address;
     console.log(`    Faucet: ${faucetAddress}`);
   } else {
@@ -91,7 +96,7 @@ async function main() {
   if (currentReserve < seedNative) {
     const need = seedNative - currentReserve;
     console.log(`[1b/4] Funding faucet with ${need} wei native (current=${currentReserve}, target=${seedNative})`);
-    await sendTx(deployer, { to: faucetAddress, value: need, gasLimit: NATIVE_SEND_GAS_LIMIT });
+    await sendTx(deployer, { to: faucetAddress, value: need, gasLimit: NATIVE_SEND_GAS_LIMIT, type: 0, gasPrice: 0n });
   } else {
     console.log(`[1b/4] Native reserve already ${currentReserve} ≥ target ${seedNative}, skipping`);
   }
@@ -116,7 +121,7 @@ async function main() {
       continue;
     }
     console.log(`[3/4] addToken(${c.symbol}=${c.address}, drop=${drop})...`);
-    await callTx(faucet, 'addToken', [c.address, drop], { gasLimit: ADD_TOKEN_GAS_LIMIT });
+    await callTx(faucet, 'addToken', [c.address, drop], { gasLimit: ADD_TOKEN_GAS_LIMIT, type: 0, gasPrice: 0n });
   }
 
   // ── 3. Pre-fund each token to RESERVE_CLAIMS × drop ─────────────────
@@ -131,7 +136,7 @@ async function main() {
     }
     const need = target - current;
     console.log(`[4/4] Transferring ${need} ${c.symbol} to faucet (current=${current}, target=${target})`);
-    await callTx(token, 'transfer', [faucetAddress!, need], { gasLimit: ERC20_TRANSFER_GAS_LIMIT });
+    await callTx(token, 'transfer', [faucetAddress!, need], { gasLimit: ERC20_TRANSFER_GAS_LIMIT, type: 0, gasPrice: 0n });
   }
 
   // ── Write back to state.json ────────────────────────────────────────
