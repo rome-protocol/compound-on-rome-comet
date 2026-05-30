@@ -2,6 +2,8 @@
 
 Empirical measurements from two gamuts run on Hadrian (chain id 200010) against the **canonical `compound-on-rome-comet` Comet** deployed with **`SPL_ERC20_cached` wrappers** as both base + collateral assets.
 
+> **Trajan (devnet, chain 121302) also has a Comet deployed (2026-05-29)** via the `scripts/registry-driven-deploy/` entry point — 1-variant "multicollat" Comet (wUSDC base + wETH/wSOL collats) + Bulker. Configured-only — gamut not yet re-run on Trajan. The metrics below remain Hadrian-only; Trajan-side gamut + Solana CU measurements are a follow-up. Trajan addresses tracked in [`rome-protocol/registry/apps/compound/121302-trajan.json`](https://github.com/rome-protocol/registry/blob/main/apps/compound/121302-trajan.json).
+
 Per-action metrics captured via `rome_solanaTxForEvmTx` + Rome's Cherry follower (no rate limits) — same instrumentation pattern as the rome-uniswap-v3 + rome-aave-v3 gamuts.
 
 ---
