@@ -13,3 +13,6 @@ scripts/hadrian-cached-test/*.md
 scripts/hadrian-cached-test/*.json
 scripts/hadrian-vanilla/*.md
 scripts/hadrian-vanilla/*.json
+
+scripts/faucet-egress/*.md
+scripts/faucet-egress/*.json
