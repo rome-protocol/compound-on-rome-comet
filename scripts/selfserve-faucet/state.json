@@ -1,0 +1,19 @@
+{
+  "selfServeFaucet": "0xfd4ED60857e0c19a0fb302Fee7c953F84d137346",
+  "selfServeReserve": {
+    "wBTC": "200000000000",
+    "wJitoSOL": "200000000000",
+    "wmSOL": "200000000000",
+    "wJUP": "200000000000",
+    "wJTO": "200000000000",
+    "wBONK": "200000000000"
+  },
+  "selfServeMints": {
+    "wBTC": "0x191224d66916cc41e83d264de8baece61760c21f94a5fcd51ba7a21fcfa2ffd6",
+    "wJitoSOL": "0x6b8b62a2571b10a752848131b6668808e0057fd4f2a9b31740ef55ecb6c3dcf8",
+    "wmSOL": "0x0aea11570d2acb4feb1b4fab8d93073bf05d1d234fc445b59902a8fd5860585b",
+    "wJUP": "0x8e32039bbdbe13197c91cf95b70d40a0648abdff6a28ac6ae38775984e508085",
+    "wJTO": "0xd065d033a1f8b9d25bc4069ac958877b4e3231cb43beed1b15ba866c47af9de4",
+    "wBONK": "0xf5530eaad680213e0b77046a7a720bd6bbd77666dba4f14dd16acedb698bdded"
+  }
+}
