@@ -120,7 +120,7 @@ describe('CompoundFaucet', () => {
   // Register N distinct fixed-drop tokens, each pre-funded for one claim.
   async function deployWithTokens(count: number, gasDrop = 0n) {
     const { faucet, deployer, user } = await deployFaucet({ gasDrop });
-    const protocol = await makeProtocol();
+    const _protocol = await makeProtocol();
     const drop = exp(100, 6);
     const tokens = [];
     for (let i = 0; i < count; i++) {
