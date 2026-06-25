@@ -13,9 +13,11 @@
 import { ethers } from 'hardhat';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fetchHadrianWrappers } from './registry';
 
-const CACHED_WUSDC = '0x33fb7AD189B0A59CCAFcC3337F3a8B61e3719912';
-const CACHED_WETH  = '0x09A9B33501f2cf1E42dF14c6EcE1F7EDE8376366';
+// wUSDC (base) + wETH (collat) are resolved live from the registry; the other
+// four collats (wHEAT/wSALT/wMILK/wOIL) are bootstrapped by bootstrap-5-cached.ts
+// and read from cached-wrappers.json below — they're not in the registry.
 const ENSURE_TOKEN_ACCOUNT_SELECTOR = '0x5e094743';
 
 const PRICE_WUSDC = ethers.BigNumber.from('100000000');           // $1
@@ -55,6 +57,11 @@ async function ensureAtaIfCached(asset: string, recipient: string, signer: any) 
 async function main() {
   const [admin] = await ethers.getSigners();
   console.log(`Deployer:    ${admin.address}`);
+
+  // Resolve the live base + wETH collat wrappers from the registry.
+  const wrappers = await fetchHadrianWrappers(['wUSDC', 'wETH']);
+  const CACHED_WUSDC = wrappers.wUSDC.address;
+  const CACHED_WETH  = wrappers.wETH.address;
 
   // Load cached wrappers from bootstrap script
   const cachedWrappersFile = path.join('scripts', 'hadrian-cached-test', 'cached-wrappers.json');
