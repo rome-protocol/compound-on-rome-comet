@@ -5,10 +5,14 @@
 // the base + collateral assets. Tests whether the cached-wrapper composition
 // (proven for Uniswap V2/V3 + Aave V3) extends to Compound.
 //
-// Inputs (hardcoded — this is a one-off Hadrian smoke):
-//   - baseAsset       = cached wUSDC (rome-solidity #210)
-//   - collateralAsset = cached wETH (same)
+// Inputs:
+//   - baseAsset       = cached wUSDC (fetched live from the registry)
+//   - collateralAsset = cached wETH (fetched live from the registry)
 //   - price feeds     = freshly deployed MockAggregator-equivalents
+//
+// Wrapper addresses are NOT hardcoded — they're resolved at runtime from the
+// live registry (/api/chains, chainId 200010) so this smoke tests whatever
+// wrappers are currently live, not a stale set. See ./registry.ts.
 //
 // Output: addresses written to scripts/hadrian-cached-test/state.json
 //
@@ -19,10 +23,7 @@
 import { ethers } from 'hardhat';
 import * as fs from 'fs';
 import * as path from 'path';
-
-// Cached SPL_ERC20 wrappers (rome-solidity #210, shipped 2026-05-23)
-const CACHED_WUSDC = '0x33fb7AD189B0A59CCAFcC3337F3a8B61e3719912';
-const CACHED_WETH  = '0x09A9B33501f2cf1E42dF14c6EcE1F7EDE8376366';
+import { fetchHadrianWrappers } from './registry';
 
 // SPL_ERC20_cached.ensure_token_account(address) — selector 0x5e094743
 const ENSURE_TOKEN_ACCOUNT_SELECTOR = '0x5e094743';
@@ -53,6 +54,12 @@ async function ensureAtaIfCached(asset: string, recipient: string, signer: any) 
 
 async function main() {
   const [admin] = await ethers.getSigners();
+
+  // Resolve the live cached wrappers from the registry (not hardcoded).
+  const wrappers = await fetchHadrianWrappers(['wUSDC', 'wETH']);
+  const CACHED_WUSDC = wrappers.wUSDC.address;
+  const CACHED_WETH  = wrappers.wETH.address;
+
   console.log(`Deployer:    ${admin.address}`);
   console.log(`Base asset:  cached wUSDC ${CACHED_WUSDC}`);
   console.log(`Collat asset: cached wETH ${CACHED_WETH}`);
