@@ -230,6 +230,18 @@ export const networkConfigs: NetworkConfig[] = [
     url: 'https://subura.devnet.romeprotocol.xyz/',
     gas: 30000000,
   },
+  {
+    network: 'nerva',
+    chainId: 210000,
+    url: 'https://nerva.testnet.romeprotocol.xyz/',
+    gas: 30000000,
+  },
+  {
+    network: 'martius',
+    chainId: 121214,
+    url: 'https://martius.testnet.romeprotocol.xyz/',
+    gas: 30000000,
+  },
 ];
 
 function setupDefaultNetworkProviders(hardhatConfig: HardhatUserConfig) {
