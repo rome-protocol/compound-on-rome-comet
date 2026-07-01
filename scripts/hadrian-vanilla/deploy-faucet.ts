@@ -143,7 +143,7 @@ async function main() {
   state.faucet = {
     address: faucetAddress,
     gasDropWei: gasDropWei.toString(),
-    tokens: collats.map((c: { symbol: string; address: string; decimals: number }) => ({
+    tokens: collats.map((c: { symbol: string, address: string, decimals: number }) => ({
       symbol: c.symbol,
       address: c.address,
       decimals: c.decimals,

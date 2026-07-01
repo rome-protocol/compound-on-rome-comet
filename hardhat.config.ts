@@ -213,9 +213,21 @@ export const networkConfigs: NetworkConfig[] = [
     gas: 30000000,
   },
   {
+    network: 'esquiline',
+    chainId: 121212,
+    url: 'https://esquiline.devnet.romeprotocol.xyz/',
+    gas: 30000000,
+  },
+  {
     network: 'aurelius',
     chainId: 30001,
     url: 'https://aurelius.real-testnet.romeprotocol.xyz/',
+    gas: 30000000,
+  },
+  {
+    network: 'subura',
+    chainId: 121213,
+    url: 'https://subura.devnet.romeprotocol.xyz/',
     gas: 30000000,
   },
   {
