@@ -1,0 +1,43 @@
+{
+  "faucet": "0xc2398c9c6f0575eFe3863BE69eA37d4115152AE2",
+  "gasDropWei": "0",
+  "drop": "1000000000",
+  "funding": [
+    {
+      "symbol": "wBTC",
+      "wrapper": "0x34AE37cFA1f41F5E69d8F042F7455A63a4F048B8",
+      "mintId": "0x191224d66916cc41e83d264de8baece61760c21f94a5fcd51ba7a21fcfa2ffd6",
+      "faucetAta": "0x2011a3e4aa6aeda320c70699f7e65e28d0d95a6f5df165b2f7746c40642781c6"
+    },
+    {
+      "symbol": "wJitoSOL",
+      "wrapper": "0x8a27E495CEAd6EcBBe25B537DBF666FD6bfE01E3",
+      "mintId": "0x6b8b62a2571b10a752848131b6668808e0057fd4f2a9b31740ef55ecb6c3dcf8",
+      "faucetAta": "0xe8d0114dd40b6a1bf43705728b02f23c1c6ee9d238dae1d46ebe9503d9f28951"
+    },
+    {
+      "symbol": "wmSOL",
+      "wrapper": "0xe6fD55A93cAecF0F9cF60FBC4D2CbE0d71b54491",
+      "mintId": "0x0aea11570d2acb4feb1b4fab8d93073bf05d1d234fc445b59902a8fd5860585b",
+      "faucetAta": "0xe7eb0c4771c69c19b7da1d6c338f0683ffae32c84fd3161943c0a091a2588793"
+    },
+    {
+      "symbol": "wJUP",
+      "wrapper": "0x71dC1C088E17cCD67058c626A358E02F6EbAAc69",
+      "mintId": "0x8e32039bbdbe13197c91cf95b70d40a0648abdff6a28ac6ae38775984e508085",
+      "faucetAta": "0xf9e0fc2b7de125c8807850659943db64be462a6cdf9283344c6542eb75ffd10d"
+    },
+    {
+      "symbol": "wJTO",
+      "wrapper": "0xCb1e4CD61704C9fcc196Ce98619E85A241383Fd8",
+      "mintId": "0xd065d033a1f8b9d25bc4069ac958877b4e3231cb43beed1b15ba866c47af9de4",
+      "faucetAta": "0x0c8a0edf87ba57a4e6fbceb5da40c658bcf6691e2eb20ce196e4b4c1819e0b9d"
+    },
+    {
+      "symbol": "wBONK",
+      "wrapper": "0x2c71373725C59B3F1D47a0D425B7050D02e014b4",
+      "mintId": "0xf5530eaad680213e0b77046a7a720bd6bbd77666dba4f14dd16acedb698bdded",
+      "faucetAta": "0x1e4aa8913c633b7bfbbdbf0224ad70d77daa338b2083eee5e90359cd4615d3ca"
+    }
+  ]
+}
