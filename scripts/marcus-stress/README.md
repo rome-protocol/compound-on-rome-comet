@@ -17,10 +17,10 @@ Drives sustained EVM-lane Supply ops against Marcus to satisfy the master spec's
 
 Pre-reqs:
 - Relayer service running (the Solana orchestrator's relayer service)
-- Test deployer wallet has UT balance + Marcus USDC gas. The driver re-uses the same deployer the bench scripts use (`~/.secrets/marcus/compound-phase4.key`).
+- Test deployer wallet has UT balance + Marcus USDC gas. The driver re-uses the same deployer the bench scripts use.
 
 ```bash
-ETH_PK=$(cat ~/.secrets/marcus/compound-phase4.key) \
+ETH_PK=<deployer-key> \
   RELAYER_URL=http://localhost:8787 \
   DURATION_HOURS=168 \
   INTERVAL_SECONDS=864 \

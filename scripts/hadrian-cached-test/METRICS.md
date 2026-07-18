@@ -4,7 +4,7 @@ Empirical measurements from two gamuts run on Hadrian (chain id 200010) against 
 
 > **Trajan (devnet, chain 121302) also has a Comet deployed (2026-05-29)** via the `scripts/registry-driven-deploy/` entry point — 1-variant "multicollat" Comet (wUSDC base + wETH/wSOL collats) + Bulker. The metrics below are Hadrian-only. Trajan addresses tracked in [`rome-protocol/rome-registry/apps/compound/121302-trajan.json`](https://github.com/rome-protocol/rome-registry/blob/main/apps/compound/121302-trajan.json).
 
-Per-action metrics captured via `rome_solanaTxForEvmTx` + Rome's Cherry follower (no rate limits) — same instrumentation pattern as the rome-uniswap-v3 + rome-aave-v3 gamuts.
+Per-action metrics captured via `rome_solanaTxForEvmTx` + an internal follower node (no rate limits) — same instrumentation pattern as the rome-uniswap-v3 + rome-aave-v3 gamuts.
 
 ---
 
@@ -149,7 +149,7 @@ Plenty of envelope left for more complex multi-asset operations.
 ## Reproduce
 
 Prerequisites:
-- Hadrian `ETH_PK` set in env or `~/rome/.secrets/hadrian/deployer.json`
+- Hadrian `ETH_PK` set in env
 - Hardhat 2 (this repo's existing toolchain)
 
 ```bash
