@@ -32,7 +32,7 @@ const COMET_REWARDS = '0x29142D91E5fe7EdD534f0783612a076E4309Dc24';
 const USDC_MINT_BS58 = '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU';
 
 const MARCUS_RPC = 'https://marcus.devnet.romeprotocol.xyz/';
-const SOLANA_RPC = 'https://node1.devnet-eu-sol-api.devnet.romeprotocol.xyz';
+const SOLANA_RPC = (process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com');
 
 function bs58ToBytes32(b: string): string {
   const decoded = bs58.decode(b);

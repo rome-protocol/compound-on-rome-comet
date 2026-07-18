@@ -11,7 +11,7 @@ const USDC_MINT = '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU';
 const UNIFIED_TOKEN_V2 = '0xfbd4De54443ddB44b3B0b32f4D39813aC7df3A31';
 const SOL_PUBLIC = 'https://api.devnet.solana.com';
 const MARCUS_RPC = 'https://marcus.devnet.romeprotocol.xyz/';
-const SOL_RPC = 'https://node1.devnet-eu-sol-api.devnet.romeprotocol.xyz';
+const SOL_RPC = (process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com');
 
 function loadKp(path: string): Keypair {
   const raw = JSON.parse(fs.readFileSync(path, 'utf8'));

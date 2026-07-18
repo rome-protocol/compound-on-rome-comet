@@ -1,7 +1,7 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { getAccount, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
-const SOLANA_RPC = 'https://node1.devnet-eu-sol-api.devnet.romeprotocol.xyz';
+const SOLANA_RPC = (process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com');
 const SOL_PUBLIC = 'https://api.devnet.solana.com';
 
 async function main() {

@@ -43,7 +43,7 @@ const ADDR = {
 };
 
 const MARCUS_RPC = 'https://marcus.devnet.romeprotocol.xyz/';
-const SOLANA_RPC = 'https://node1.devnet-eu-sol-api.devnet.romeprotocol.xyz';
+const SOLANA_RPC = (process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com');
 
 function exp(amount: number, decimals: number): bigint {
   if (Number.isInteger(amount)) return BigInt(amount) * 10n ** BigInt(decimals);

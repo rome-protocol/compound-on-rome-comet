@@ -31,7 +31,7 @@ const COMET_PROXY = '0x458fd96E090F642D68f96CdEF7d42aCE41E0528c'; // production-
 const SOL_USD_FEED = '0x6FcE6648C0350e3f7dA0C0f432405df98dD0D12E'; // Rome Pyth Pull (immutable price)
 
 const MARCUS_RPC = 'https://marcus.devnet.romeprotocol.xyz/';
-const SOLANA_RPC = 'https://node1.devnet-eu-sol-api.devnet.romeprotocol.xyz';
+const SOLANA_RPC = (process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com');
 
 function exp(amount: number, decimals: number): bigint {
   if (Number.isInteger(amount)) return BigInt(amount) * 10n ** BigInt(decimals);

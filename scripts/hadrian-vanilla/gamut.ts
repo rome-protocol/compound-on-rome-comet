@@ -26,7 +26,7 @@ import { callTx, sendTx } from '../_lib/gas';
 
 const STATE_FILE = path.join('scripts', 'hadrian-vanilla', 'state.json');
 const ROME_RPC = 'https://hadrian.testnet.romeprotocol.xyz/';
-const SOLANA_RPC = 'https://node1.devnet-eu-sol-api.devnet.romeprotocol.xyz';
+const SOLANA_RPC = (process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com');
 
 type Metric = {
   name: string;

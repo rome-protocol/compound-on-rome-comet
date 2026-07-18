@@ -29,7 +29,7 @@ import * as path from 'path';
 const _ENSURE_TOKEN_ACCOUNT_SELECTOR = '0x5e094743';
 
 const ROME_RPC = 'https://hadrian.testnet.romeprotocol.xyz/';
-const SOLANA_RPC = 'https://node1.devnet-eu-sol-api.devnet.romeprotocol.xyz';
+const SOLANA_RPC = (process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com');
 
 type Metric = {
   name: string;

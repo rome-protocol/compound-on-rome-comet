@@ -12,7 +12,7 @@ const USDC = '0x14D9359B6F72CbAa25c54fedd5846B26965716e4';
 const WJITOSOL = '0x408724bD7A645761873a639dCB50C31FD3E371f4';
 const COMET_V2 = '0x6dba2EFF3E118374957b8BeD296cF976906bFC63';
 const MARCUS_RPC = 'https://marcus.devnet.romeprotocol.xyz/';
-const SOLANA_RPC = 'https://node1.devnet-eu-sol-api.devnet.romeprotocol.xyz';
+const SOLANA_RPC = (process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com');
 
 function exp(amount: number, decimals: number): bigint {
   if (Number.isInteger(amount)) return BigInt(amount) * 10n ** BigInt(decimals);
