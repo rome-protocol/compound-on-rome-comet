@@ -1,4 +1,12 @@
-# Compound Comet
+# Compound III (Comet) on Rome
+
+This repo is a fork of [Compound III (Comet)](https://github.com/compound-finance/comet) deployed on **Rome** — EVM chains that run on Solana. It runs the canonical Comet money-market against Rome's `SPL_ERC20_cached` token wrappers, so an EVM lending market composes directly with native Solana liquidity. A user can post multiple collaterals and open a borrow in a **single Solana transaction**; measured Solana compute-unit / heap / signature numbers are in [`scripts/hadrian-cached-test/METRICS.md`](scripts/hadrian-cached-test/METRICS.md). If you are building against this repo, read [`AGENTS.md`](AGENTS.md) for the Rome-specific rules and [`CLAUDE.md`](CLAUDE.md) for the contributor guide.
+
+---
+
+## Upstream Compound III docs
+
+The remainder of this document is the upstream Compound III (Comet) documentation.
 
 ## Getting started
 
@@ -241,7 +249,7 @@ These simulations are extremely useful for testing deployments before actually c
 ##### Deploy Script Gotchas and Tips
 
 - If the deploy script is for a new market on a chain with an existing market, make sure to call 'setFactory(address,address)' in the initialization migration script.
-(TODO: Scenarios will fail prior to running the migration script because the factory will not be set during deployment, will need to figure out a better way)
+(Note: scenarios will fail if run before the migration script executes, because the factory is not set during deployment — run the migration first.)
 
 ##### Verifying Deployments
 

@@ -10,7 +10,7 @@ Compound v3 (Comet) money-market fork — the EVM-side lending app for the Compo
 
 ## Configuration / chain metadata
 
-Chain ids, base assets, collateral assets, price feeds, and Comet variant addresses for every Rome chain are canonical at **[`rome-protocol/registry`](https://github.com/rome-protocol/registry)** under `apps/compound/<chainId>-<slug>.json`. Don't hardcode in `hardhat.config.ts` or deploy scripts.
+Chain ids, base assets, collateral assets, price feeds, and Comet variant addresses for every Rome chain are canonical at **[`rome-protocol/rome-registry`](https://github.com/rome-protocol/rome-registry)** under `apps/compound/<chainId>-<slug>.json`. Don't hardcode in `hardhat.config.ts` or deploy scripts.
 
 The `scripts/registry-driven-deploy/` entry point reads the registry JSON to drive a fresh Comet variant deploy on any Rome chain — adding Compound to a new chain is a registry edit, not a code change in this repo.
 
@@ -46,7 +46,7 @@ CHAIN_ID=200010 REGISTRY_ROOT=/path/to/registry-checkout \
 
 ## Cached-wrapper composition (the Rome-specific bit)
 
-Compound v3 composes with **`SPL_ERC20_cached` wrappers** the same way Uniswap V2/V3 + Aave V3 do — modify the token layer, keep the protocol layer canonical. Empirically validated on Hadrian (PR #18, merged 2026-05-24).
+Compound v3 composes with **`SPL_ERC20_cached` wrappers** the same way Uniswap V2/V3 + Aave V3 do — modify the token layer, keep the protocol layer canonical. Empirically validated on Hadrian (2026-05-24).
 
 ### One operational gotcha
 
@@ -94,9 +94,9 @@ The `state.json`, `state-5collat.json`, and `cached-wrappers.json` files record 
 
 ## Architecture (the Rome-specific additions)
 
-- **`contracts/LiquidationRouter.sol`** — atomic absorb + N×buyCollateral in a single EVM tx. Lets a liquidator absorb the user's debt and buy collateral within the same EVM tx, removing the inter-tx race window. See PR #15.
-- **`scripts/registry-driven-deploy/`** — chain-agnostic Comet deploy: reads target params from `rome-protocol/registry`, deploys fresh Comet variants + Bulker. Adding a new Rome chain = a registry JSON edit. See PR #14.
-- **`scripts/hadrian-cached-test/`** — cached-wrapper composition test infrastructure: standalone deploy scripts + 2 gamuts + per-action Solana metrics + per-collat scaling measurements. See PR #18 + `METRICS.md`.
+- **`contracts/LiquidationRouter.sol`** — atomic absorb + N×buyCollateral in a single EVM tx. Lets a liquidator absorb the user's debt and buy collateral within the same EVM tx, removing the inter-tx race window.
+- **`scripts/registry-driven-deploy/`** — chain-agnostic Comet deploy: reads target params from `rome-protocol/rome-registry`, deploys fresh Comet variants + Bulker. Adding a new Rome chain = a registry JSON edit.
+- **`scripts/hadrian-cached-test/`** — cached-wrapper composition test infrastructure: standalone deploy scripts + 2 gamuts + per-action Solana metrics + per-collat scaling measurements. See `METRICS.md`.
 
 The vendored upstream Compound code (`contracts/Comet.sol`, `CometExt.sol`, `Configurator.sol`, etc.) is byte-identical to mainnet `@compound-finance/comet`. Don't modify — protocol-level work happens upstream first.
 
@@ -113,7 +113,7 @@ The vendored upstream Compound code (`contracts/Comet.sol`, `CometExt.sol`, `Con
 | Scan / Slither analyzer / CodeQL / Semgrep OSS | security tools | yes |
 | test (Rome CI) | Compound's own CI | yes |
 
-**Heads-up on Scenarios**: it spiders Compound mainnet contracts via Etherscan API and frequently rate-limits in CI. If the Scenarios "Prepare Repository" job fails with "Too many invalid api key attempts" it's an external issue, NOT your code. Admin-merge override is justified in that case — same as PR #18's merge.
+**Heads-up on Scenarios**: it spiders Compound mainnet contracts via Etherscan API and frequently rate-limits in CI. If the Scenarios "Prepare Repository" job fails with "Too many invalid api key attempts" it's an external issue, NOT your code. Admin-merge override is justified in that case.
 
 If ESLint catches your scripts: don't suppress globally. Add specific `.eslintignore` entries for non-code files (the lint glob `scripts/**/*` catches .md and .json too). Pattern: `scripts/<your-dir>/*.md` + `scripts/<your-dir>/*.json`.
 
@@ -123,9 +123,9 @@ If TypeScript catches your scripts: imports like `ethers.BigNumber` work as a va
 
 | Layer | Consumer | Method |
 |---|---|---|
-| `Comet.supply / withdraw / supplyTo` | `compound-on-rome-demo` UI | wagmi readContract / writeContract; ABI from `@compound-finance/comet` npm |
-| `Comet.borrowBalanceOf / balanceOf / collateralBalanceOf` | `compound-on-rome-demo` portfolio view | view-only reads |
-| `LiquidationRouter.absorbAndBuy` | `compound-on-rome-orchestrator` keeper | cross-chain liquidation flows; see PR #15 |
+| `Comet.supply / withdraw / supplyTo` | the reference demo UI | wagmi readContract / writeContract; ABI from `@compound-finance/comet` npm |
+| `Comet.borrowBalanceOf / balanceOf / collateralBalanceOf` | the reference demo portfolio view | view-only reads |
+| `LiquidationRouter.absorbAndBuy` | the Solana orchestrator | cross-chain liquidation flows |
 | `SPL_ERC20_cached.ensure_token_account` | Compound deploy scripts | warmup before first supply (see Hadrian smoke playbook above) |
 
 ## Change impact map
@@ -133,16 +133,15 @@ If TypeScript catches your scripts: imports like `ethers.BigNumber` work as a va
 | If you change... | Also check / update |
 |---|---|
 | `contracts/Comet.sol` or vendored Compound contracts | Run full forge + scenario suite; bytecode-hash invariants may break |
-| `contracts/LiquidationRouter.sol` | Update `compound-on-rome-orchestrator` keeper if ABI changed |
-| `scripts/registry-driven-deploy/` | Update `rome-protocol/registry` `apps/compound/` schema if needed |
+| `scripts/registry-driven-deploy/` | Update `rome-protocol/rome-registry` `apps/compound/` schema if needed |
 | `scripts/hadrian-cached-test/` | METRICS.md per re-run; this CLAUDE.md if architecture changes |
-| `hardhat.config.ts` network entries | rome-protocol/registry chains entries should match |
+| `hardhat.config.ts` network entries | rome-protocol/rome-registry chains entries should match |
 
 ## Test selection
 
 | What changed | Run |
 |---|---|
 | `contracts/*` (Compound vendored) | `yarn test` + `yarn forge:test` + `yarn scenario` |
-| `contracts/LiquidationRouter.sol` | `yarn test test/LiquidationRouter*` + integration test against rome-protocol/compound-on-rome-orchestrator |
+| `contracts/LiquidationRouter.sol` | `yarn test test/LiquidationRouter*` |
 | `scripts/hadrian-cached-test/` | `yarn lint` + `yarn tsc` + manually run the 5-script Hadrian smoke playbook above. No unit tests required (these are deploy + smoke scripts) |
 | `hardhat.config.ts` | `yarn tsc` + a deploy dry-run on the network you changed |

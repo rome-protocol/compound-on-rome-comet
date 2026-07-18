@@ -16,7 +16,7 @@ Drives sustained EVM-lane Supply ops against Marcus to satisfy the master spec's
 ## Run
 
 Pre-reqs:
-- Relayer service running (`compound-on-rome-orchestrator/relayer/`)
+- Relayer service running (the Solana orchestrator's relayer service)
 - Test deployer wallet has UT balance + Marcus USDC gas. The driver re-uses the same deployer the bench scripts use (`~/.secrets/marcus/compound-phase4.key`).
 
 ```bash
