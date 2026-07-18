@@ -28,7 +28,7 @@ const ADDR = {
 };
 
 const MARCUS_RPC = 'https://marcus.devnet.romeprotocol.xyz/';
-const SOLANA_RPC = 'https://node1.devnet-eu-sol-api.devnet.romeprotocol.xyz';
+const SOLANA_RPC = (process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com');
 
 async function getRomeSolanaSigs(evmTxHash: string): Promise<string[]> {
   const r = await fetch(MARCUS_RPC, {

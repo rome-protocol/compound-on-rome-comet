@@ -2,7 +2,7 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { getAccount } from '@solana/spl-token';
 
 async function main() {
-  const conn = new Connection('https://node1.devnet-eu-sol-api.devnet.romeprotocol.xyz', 'confirmed');
+  const conn = new Connection((process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com'), 'confirmed');
   const ata = new PublicKey('5WYANgGHwZDhzdDR2cgbVFs6jQDNT41AefpQHEeGHkB6');
   console.log('Checking comet ATA:', ata.toBase58());
   try {

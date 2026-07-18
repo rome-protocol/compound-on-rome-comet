@@ -17,7 +17,7 @@ const COMET_PROXY = '0x458fd96E090F642D68f96CdEF7d42aCE41E0528c';
 const UNIFIED_TOKEN_V2 = '0xfbd4De54443ddB44b3B0b32f4D39813aC7df3A31';
 
 const MARCUS_RPC = 'https://marcus.devnet.romeprotocol.xyz/';
-const SOLANA_RPC = 'https://node1.devnet-eu-sol-api.devnet.romeprotocol.xyz';
+const SOLANA_RPC = (process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com');
 
 async function getRomeSolanaSigs(evmTxHash: string): Promise<string[]> {
   const r = await fetch(MARCUS_RPC, {

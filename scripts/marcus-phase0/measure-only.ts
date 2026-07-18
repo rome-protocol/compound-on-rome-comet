@@ -17,7 +17,7 @@ const COMET_IMPL = '0x4e81Db7fd317B61BcDd73eA9983A6B077b4a5A39'; // Comet impl w
 const SOL_USD_FEED = '0x6FcE6648C0350e3f7dA0C0f432405df98dD0D12E';
 
 const MARCUS_RPC = 'https://marcus.devnet.romeprotocol.xyz/';
-const SOLANA_RPC = 'https://node1.devnet-eu-sol-api.devnet.romeprotocol.xyz';
+const SOLANA_RPC = (process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com');
 
 const DAY = 86400;
 
