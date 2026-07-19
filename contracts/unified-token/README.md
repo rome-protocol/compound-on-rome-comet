@@ -119,9 +119,8 @@ ed25519-verify precompile to let users sign Solana-side authorizations in
 their EVM wallet), this whole issue dissolves: each protocol can carry its
 own user-signed permit at supply time, no delegate state needed.
 
-This is tracked as a future enhancement in the spec at
-[`rome-specs/active/technical/2026-05-04-compound-on-rome-unified-usdc.md`](../../../rome-specs/active/technical/2026-05-04-compound-on-rome-unified-usdc.md)
-§Q2.
+This is tracked as a future enhancement in the Compound-on-Rome unified-USDC
+technical spec (§Q2).
 
 ## Reference: source files
 
