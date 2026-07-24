@@ -2,6 +2,11 @@
 
 > **Built on [Rome Protocol](https://docs.rome.builders)** — EVM chains that run natively inside the Solana runtime, where Solidity apps call Solana programs atomically (CPI) and Solana users drive EVM apps: two VMs, one chain, one block.
 
+
+- **Single state** — EVM contracts and Solana programs share one state; no bridging or sync delay.
+- **Atomic CPI access** — Solidity calls any Solana program directly (SPL Token, Meteora, …) inside one atomic transaction.
+- **App Sovereignty** — each app runs its own EVM chain with a custom gas token and captures its own fee revenue.
+
 This repo is a fork of [Compound III (Comet)](https://github.com/compound-finance/comet) deployed on **Rome** — EVM chains that run on Solana. It runs the canonical Comet money-market against Rome's `SPL_ERC20_cached` token wrappers, so an EVM lending market composes directly with native Solana liquidity. A user can post multiple collaterals and open a borrow in a **single Solana transaction**; measured Solana compute-unit / heap / signature numbers are in [`scripts/hadrian-cached-test/METRICS.md`](scripts/hadrian-cached-test/METRICS.md). If you are building against this repo, read [`AGENTS.md`](AGENTS.md) for the Rome-specific rules and [`CLAUDE.md`](CLAUDE.md) for the contributor guide.
 
 ---
