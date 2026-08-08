@@ -1,0 +1,67 @@
+{
+  "cometProxy": "0x771D2f213b4C23f70Fa884d441a405F41F51Ab50",
+  "proxyAdmin": "0xe91b483b67d2a8f11786a9d6d0001720647e09a8",
+  "originalImpl": "0x5f3bb68c90012515eceef71efc2767efad98cd93",
+  "newImpl": "0xb6c901B20C712a3931a4e00f0d51737449D4ba87",
+  "txHashes": {
+    "deploy": "0xa4b7112c1fd836ee5f1f9fb59ce0c23ceeeb28ca5d7d433c0582686ef4dc5027",
+    "upgrade": "0x8e7bad9045990621761acca3af39b51a09755e98feaa4810c695b16c7d7fd3cf"
+  },
+  "feeds": [
+    {
+      "label": "base (baseTokenPriceFeed)",
+      "pair": "USDC/USD",
+      "old": "0xe6b9bD3d50E3E4bF73724065E6F9f99Fd1b8B027",
+      "new": "0x0B1697E8f360271090D540Eaf3A16520C8651d12"
+    },
+    {
+      "label": "asset0",
+      "pair": "ETH/USD",
+      "old": "0xED815CAe213b16B092d531D0a511E77D43a3C805",
+      "new": "0xDFC77D0Dd2a193C08200ECf9EF6fe5a4bF74E1a7"
+    },
+    {
+      "label": "asset1",
+      "pair": "SOL/USD",
+      "old": "0x23F18946e1c3dcB710Be9548F9C66d1e877CC1F6",
+      "new": "0x2779176109cbEDD2fDdA63937E087518b309F4BE"
+    },
+    {
+      "label": "asset2",
+      "pair": "BTC/USD",
+      "old": "0x63Ecae6b814f4A6a8E31CF4B38C82fee21b5a842",
+      "new": "0xF0aF167691D3Bcc49e17902930831AdD58C8cF97"
+    },
+    {
+      "label": "asset3",
+      "pair": "JITOSOL/USD",
+      "old": "0xF08cb365f3f34A288eDd9223F22F1d9397351B39",
+      "new": "0xC9afE27D4074d8f4Fe025360C6CFcB86F555d395"
+    },
+    {
+      "label": "asset4",
+      "pair": "MSOL/USD",
+      "old": "0xf01bDDA1091120804f901E0D5f0293ee9616F62b",
+      "new": "0x6dDcFF771f8E00D61086243f28e6B629b240c15b"
+    },
+    {
+      "label": "asset5",
+      "pair": "JUP/USD",
+      "old": "0xBe43c0d3dFBC10313bF7fBaD67Dc93EC1cA136E7",
+      "new": "0x979d8F7b518b96d1a99Fa973Ec133F5705F3b5ae"
+    },
+    {
+      "label": "asset6",
+      "pair": "JTO/USD",
+      "old": "0x420cD39f59Eea11e3A8e01A9B3C830ff9a2793ae",
+      "new": "0xfBb33E87b5Cf9563BB0a1638EbFEDAc230b8A2C2"
+    },
+    {
+      "label": "asset7",
+      "pair": "BONK/USD",
+      "old": "0xC63Af5d67d2A655a087BF635F3980DCe041963de",
+      "new": "0xA5D6693323C58B7Da65578C46E041D975aaEb030"
+    }
+  ],
+  "cutoverAt": "2026-08-08T13:04:19.390Z"
+}
