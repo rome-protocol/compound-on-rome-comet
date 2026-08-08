@@ -1,0 +1,33 @@
+{
+  "cometProxy": "0xB42aeBB570DB4EC6ede97e460e2D5df37C472881",
+  "proxyAdmin": "0x1f2e889ee05196270d7597f349f58d9779c715fa",
+  "originalImpl": "0xc9d3532827fdca6e18a6cf110402a9b5eeebfe21",
+  "newImpl": "0x71d913B0851Db32F2A917AdD0D5223b3366e0645",
+  "txHashes": {
+    "deploy": "0x6776d91b2464a8c479c510082613b637231b3e73942c7468f533108237269810",
+    "upgrade": "0x0f2909b2216f68fc4de7fe4d56431a33f26e6f52d0ef27b9aacc276aabbff6c0"
+  },
+  "feeds": [
+    {
+      "label": "base",
+      "old": "0xe6b9bD3d50E3E4bF73724065E6F9f99Fd1b8B027",
+      "new": "0x0B1697E8f360271090D540Eaf3A16520C8651d12"
+    },
+    {
+      "label": "asset0",
+      "old": "0xED815CAe213b16B092d531D0a511E77D43a3C805",
+      "new": "0xDFC77D0Dd2a193C08200ECf9EF6fe5a4bF74E1a7"
+    },
+    {
+      "label": "asset1",
+      "old": "0x23F18946e1c3dcB710Be9548F9C66d1e877CC1F6",
+      "new": "0x2779176109cbEDD2fDdA63937E087518b309F4BE"
+    },
+    {
+      "label": "asset2",
+      "old": "0x63Ecae6b814f4A6a8E31CF4B38C82fee21b5a842",
+      "new": "0xF0aF167691D3Bcc49e17902930831AdD58C8cF97"
+    }
+  ],
+  "cutoverAt": "2026-08-08T13:38:30.314Z"
+}
