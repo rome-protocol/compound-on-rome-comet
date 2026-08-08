@@ -38,10 +38,15 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // ─── Ground truth (verified on-chain 2026-08-08; re-verified live below) ───
-const COMET_PROXY = '0xfc322489D4089AdCC79074C8058Fd257c63622D8'; // numAssets 8
-const PROXY_ADMIN = '0x60d7BD2e676C4626Bb0B99Ce9c471aaB212A1b61';
-const ORIGINAL_IMPL = '0x1393f6cE821332C42c7311AAAF52CE40B831Fa09'; // restore target
-const EXPECTED_EXECUTOR = '0x1f4946Be340F06c46A50E65084790968aBcc48F6'; // ProxyAdmin.owner()
+// Comet-identity constants. Default to the first cache-fed comet cut over
+// (0xfc322489); override via env to cut over another generation on the SAME
+// old->new feed map (all Hadrian cache-fed comets share the 9 CachedPythAdapter
+// feed addresses). The old-feed-match assertion below hard-fails if the target
+// isn't actually on the expected old feeds, so a wrong COMET_PROXY can't slip through.
+const COMET_PROXY = process.env.COMET_PROXY || '0xfc322489D4089AdCC79074C8058Fd257c63622D8';
+const PROXY_ADMIN = process.env.PROXY_ADMIN || '0x60d7BD2e676C4626Bb0B99Ce9c471aaB212A1b61';
+const ORIGINAL_IMPL = process.env.ORIGINAL_IMPL || '0x1393f6cE821332C42c7311AAAF52CE40B831Fa09'; // restore target
+const EXPECTED_EXECUTOR = '0x1f4946Be340F06c46A50E65084790968aBcc48F6'; // ProxyAdmin.owner() — F6, same for both cache-fed comets
 
 interface FeedSwap {
   label: string;

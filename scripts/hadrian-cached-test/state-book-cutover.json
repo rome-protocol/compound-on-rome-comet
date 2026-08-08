@@ -1,11 +1,11 @@
 {
-  "cometProxy": "0xfc322489D4089AdCC79074C8058Fd257c63622D8",
-  "proxyAdmin": "0x60d7BD2e676C4626Bb0B99Ce9c471aaB212A1b61",
-  "originalImpl": "0x1393f6cE821332C42c7311AAAF52CE40B831Fa09",
-  "newImpl": "0xB9762Ac52440376be2C6f4E1bBD7e2a04aeD2ad1",
+  "cometProxy": "0x771D2f213b4C23f70Fa884d441a405F41F51Ab50",
+  "proxyAdmin": "0xe91b483b67d2a8f11786a9d6d0001720647e09a8",
+  "originalImpl": "0x5f3bb68c90012515eceef71efc2767efad98cd93",
+  "newImpl": "0xb6c901B20C712a3931a4e00f0d51737449D4ba87",
   "txHashes": {
-    "deploy": "0xce34c081c620a208c78bea42d9e678fae9834e55dbd544cdb9e7f782a3a29ad8",
-    "upgrade": "0x26f4d9f888803700841ecfbfb4ab23a2b90c15a05469c8f546a46f6e0dd46d8b"
+    "deploy": "0xa4b7112c1fd836ee5f1f9fb59ce0c23ceeeb28ca5d7d433c0582686ef4dc5027",
+    "upgrade": "0x8e7bad9045990621761acca3af39b51a09755e98feaa4810c695b16c7d7fd3cf"
   },
   "feeds": [
     {
@@ -63,5 +63,5 @@
       "new": "0xA5D6693323C58B7Da65578C46E041D975aaEb030"
     }
   ],
-  "cutoverAt": "2026-08-08T12:26:10.013Z"
+  "cutoverAt": "2026-08-08T13:04:19.390Z"
 }
