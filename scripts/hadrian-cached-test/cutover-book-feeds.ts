@@ -567,6 +567,19 @@ async function main(): Promise<void> {
     console.log('✓ matches recorded ORIGINAL_IMPL.');
   }
 
+  const owner = await pa.owner();
+  console.log(`ProxyAdmin owner: ${owner}`);
+  if (!sameAddr(owner, EXPECTED_EXECUTOR)) {
+    const msg = `owner drifted from recorded ground truth: on-chain=${owner} expected EXPECTED_EXECUTOR=${EXPECTED_EXECUTOR}`;
+    if (mode === 'dry') {
+      console.warn(`⚠ ${msg} (continuing — dry mode is read-only)`);
+    } else {
+      throw new Error(`${msg} — abort before sending any tx`);
+    }
+  } else {
+    console.log('✓ matches recorded EXPECTED_EXECUTOR.');
+  }
+
   if (mode === 'restore') {
     await runRestore(comet, pa, signer);
     return;
