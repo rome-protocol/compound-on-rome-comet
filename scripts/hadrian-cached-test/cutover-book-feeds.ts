@@ -72,14 +72,20 @@ const FEED_SWAPS: FeedSwap[] = [
 const SECONDS_PER_YEAR = 31_536_000;
 const PRICE_FEED_DECIMALS = 8;
 
-const EXPECTED_CONFIG_DIFF_PATHS = [
-  'baseTokenPriceFeed',
-  ...Array.from({ length: 8 }, (_, i) => `assetConfigs[${i}].priceFeed`),
-];
-const EXPECTED_LIVE_DIFF_PATHS = [
-  'baseTokenPriceFeed',
-  ...Array.from({ length: 8 }, (_, i) => `assets[${i}].priceFeed`),
-];
+// old CachedPythAdapter -> new BookFeedAdapter, keyed by lowercased old
+// address. Lets the script cut over ANY cache-fed comet on this shared feed
+// set — the full 8-asset comets AND subsets (e.g. the 3-asset 0xB42aeBB5,
+// base+ETH/SOL/BTC) — by looking each live feed up rather than assuming a
+// fixed count/order. A live feed absent from this map aborts (unknown feed).
+const OLD_TO_NEW = new Map<string, FeedSwap>(FEED_SWAPS.map((f) => [f.old.toLowerCase(), f]));
+function newFor(oldFeed: string): string {
+  const swap = OLD_TO_NEW.get(oldFeed.toLowerCase());
+  if (!swap) throw new Error(`live feed ${oldFeed} is not in the known old->new map — refusing to cut over an unrecognized feed`);
+  return swap.new;
+}
+// Diff paths are derived from the comet's live numAssets, not a fixed 8.
+const configDiffPaths = (n: number): string[] => ['baseTokenPriceFeed', ...Array.from({ length: n }, (_, i) => `assetConfigs[${i}].priceFeed`)];
+const liveDiffPaths = (n: number): string[] => ['baseTokenPriceFeed', ...Array.from({ length: n }, (_, i) => `assets[${i}].priceFeed`)];
 
 const PROXY_ADMIN_ABI = [
   'function upgrade(address proxy, address implementation) external',
@@ -351,27 +357,22 @@ function assertOnlyExpectedDiffer(diffs: Diff[], expectedPaths: string[], contex
 }
 
 function assertOldFeedsMatch(live: LiveSnapshot): void {
+  // Every live feed (base + each asset) must be a KNOWN old cached feed in the
+  // map. Works for any subset/order — protects against a wrong COMET_PROXY
+  // (a comet on some other feed set aborts here) and against a stale map.
   const mismatches: string[] = [];
-  if (!sameAddr(live.baseTokenPriceFeed, FEED_SWAPS[0].old)) {
-    mismatches.push(`${FEED_SWAPS[0].label}: on-chain=${live.baseTokenPriceFeed} expected-old=${FEED_SWAPS[0].old}`);
+  if (!OLD_TO_NEW.has(live.baseTokenPriceFeed.toLowerCase())) {
+    mismatches.push(`base: on-chain=${live.baseTokenPriceFeed} is not a known old cached feed`);
   }
   live.assets.forEach((a, i) => {
-    const expected = FEED_SWAPS[i + 1];
-    if (!sameAddr(a.priceFeed, expected.old)) {
-      mismatches.push(`${expected.label} (${a.asset}): on-chain=${a.priceFeed} expected-old=${expected.old}`);
+    if (!OLD_TO_NEW.has(a.priceFeed.toLowerCase())) {
+      mismatches.push(`asset${i} (${a.asset}): on-chain=${a.priceFeed} is not a known old cached feed`);
     }
   });
   if (mismatches.length > 0) {
-    throw new Error(`Old-feed map is STALE — on-chain feed(s) don't match the recorded ground truth:\n  ${mismatches.join('\n  ')}`);
+    throw new Error(`On-chain feed(s) not in the known old->new map — wrong comet or stale map:\n  ${mismatches.join('\n  ')}`);
   }
-  console.log('✓ All 9 on-chain feeds match the recorded old (CachedPythAdapter) set.');
-}
-
-function assertAssetCount(live: LiveSnapshot, expected: number): void {
-  if (live.numAssets !== expected) {
-    throw new Error(`numAssets on-chain=${live.numAssets} != expected=${expected} — asset set has changed, map is stale`);
-  }
-  console.log(`✓ numAssets = ${expected}, matches expectation.`);
+  console.log(`✓ All ${live.numAssets + 1} on-chain feeds (base + ${live.numAssets} assets) are known old (CachedPythAdapter) feeds.`);
 }
 
 function assertIsOwner(owner: string, signerAddr: string): void {
@@ -503,22 +504,23 @@ async function runCutover(comet: any, pa: any, signer: any, live: LiveSnapshot, 
 
   const after = await readLiveSnapshot(comet);
 
-  if (!sameAddr(after.baseTokenPriceFeed, FEED_SWAPS[0].new)) {
-    throw new Error(`post-verify: baseTokenPriceFeed=${after.baseTokenPriceFeed}, expected new=${FEED_SWAPS[0].new}`);
+  // Each post feed must be exactly newFor(the SAME asset's pre-image old feed).
+  if (!sameAddr(after.baseTokenPriceFeed, newFor(live.baseTokenPriceFeed))) {
+    throw new Error(`post-verify: baseTokenPriceFeed=${after.baseTokenPriceFeed}, expected new=${newFor(live.baseTokenPriceFeed)}`);
   }
   after.assets.forEach((a, i) => {
-    const expected = FEED_SWAPS[i + 1].new;
+    const expected = newFor(live.assets[i].priceFeed);
     if (!sameAddr(a.priceFeed, expected)) {
       throw new Error(`post-verify: assets[${i}].priceFeed=${a.priceFeed}, expected new=${expected}`);
     }
   });
-  console.log('✓ all 9 feeds now point at the new BookFeedAdapters.');
+  console.log(`✓ all ${after.numAssets + 1} feeds now point at the new BookFeedAdapters.`);
 
   const liveDiffs = deepDiff(stripTotals(live), stripTotals(after));
   printDiff(liveDiffs, 'Pre- vs. post-upgrade on-chain diff');
-  assertOnlyExpectedDiffer(liveDiffs, EXPECTED_LIVE_DIFF_PATHS, 'post-cutover config identity');
+  assertOnlyExpectedDiffer(liveDiffs, liveDiffPaths(after.numAssets), 'post-cutover config identity');
 
-  await assertGetPriceSane(comet, FEED_SWAPS.map((f) => f.new));
+  await assertGetPriceSane(comet, [after.baseTokenPriceFeed, ...after.assets.map((a) => a.priceFeed)]);
 
   assertTotalsConsistent(live.totalSupply, after.totalSupply, 'totalSupply');
   assertTotalsConsistent(live.totalBorrow, after.totalBorrow, 'totalBorrow');
@@ -532,7 +534,10 @@ async function runCutover(comet: any, pa: any, signer: any, live: LiveSnapshot, 
       deploy: impl.deployTransaction.hash,
       upgrade: upgradeTx.hash,
     },
-    feeds: FEED_SWAPS.map((f) => ({ label: f.label, pair: f.pair, old: f.old, new: f.new })),
+    feeds: [
+      { label: 'base', old: live.baseTokenPriceFeed, new: after.baseTokenPriceFeed },
+      ...live.assets.map((a, i) => ({ label: `asset${i}`, old: a.priceFeed, new: after.assets[i].priceFeed })),
+    ],
     cutoverAt: new Date().toISOString(),
   };
   const stateFile = path.join('scripts', 'hadrian-cached-test', 'state-book-cutover.json');
@@ -591,15 +596,18 @@ async function main(): Promise<void> {
   }
 
   const live = await readLiveSnapshot(comet);
-  assertAssetCount(live, 8);
+  console.log(`✓ numAssets = ${live.numAssets} (count-stability is enforced by the pre/post live diff below, not a hardcoded expectation).`);
   assertOldFeedsMatch(live);
 
-  const oldProjected = toConfiguration(live, FEED_SWAPS[0].old, (i) => FEED_SWAPS[i + 1].old);
-  const newConfig = toConfiguration(live, FEED_SWAPS[0].new, (i) => FEED_SWAPS[i + 1].new);
+  // Both projections come from the SAME live read; oldProjected re-uses the
+  // live feeds verbatim (identity), newConfig maps each via newFor — so the
+  // diff between them is EXACTLY the feeds, by construction, for any subset.
+  const oldProjected = toConfiguration(live, live.baseTokenPriceFeed, (i) => live.assets[i].priceFeed);
+  const newConfig = toConfiguration(live, newFor(live.baseTokenPriceFeed), (i) => newFor(live.assets[i].priceFeed));
 
   const diffs = deepDiff(oldProjected, newConfig);
   printDiff(diffs, 'Config diff (old feeds -> new BookFeedAdapters)');
-  assertOnlyExpectedDiffer(diffs, EXPECTED_CONFIG_DIFF_PATHS, 'dry-run config diff');
+  assertOnlyExpectedDiffer(diffs, configDiffPaths(live.numAssets), 'dry-run config diff');
 
   await printPriceSanity(signer);
 
