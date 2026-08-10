@@ -331,3 +331,122 @@ export function formatCoverageReport(result: CoverageResult): string {
   }
   return lines.join('\n');
 }
+
+// ── Pre-deploy book->book source-account parity guard ─────────────────────
+
+/** One old->new feed swap this cutover is about to make. */
+export interface FeedSwapPair {
+  label: string;
+  pair: string;
+  old: string;
+  new: string;
+}
+
+export interface SourceParityRow {
+  label: string;
+  pair: string;
+  old: string;
+  new: string;
+  /** The shared bytes32 source account both adapters wrap. */
+  source: string;
+}
+
+const ZERO_SOURCE = /^0x0*$/i;
+
+async function readSourceOrThrow(
+  read: (adapter: string) => Promise<string>,
+  adapter: string,
+  context: string,
+): Promise<string> {
+  let v: string;
+  try {
+    v = await read(adapter);
+  } catch (e) {
+    const msg = (e as Error)?.message ?? String(e);
+    throw new Error(
+      `${context} has no readable sourceAccount() (${msg}) — a legacy CachedPythAdapter exposes pythAccount, ` +
+      `not sourceAccount; this cutover only supports book->book. Abort (teach an explicit mapping for a ` +
+      `cached->book run rather than silently skipping this guard).`,
+    );
+  }
+  if (!v || typeof v !== 'string' || ZERO_SOURCE.test(v)) {
+    throw new Error(`${context} returned an empty/zero sourceAccount() (${String(v)}) — unconfigured adapter, abort.`);
+  }
+  return v;
+}
+
+/**
+ * Pre-deploy guard for a book->book feed cutover: every swap row must map an
+ * old BookFeedAdapter to a new BookFeedAdapter that wraps the SAME on-chain
+ * source account. A transposed row (old-for-A -> new-for-B) passes both the
+ * set-membership coverage gate AND printPriceSanity's >1% *warn* (both blind
+ * to which source a new adapter tracks) yet silently mis-prices an asset.
+ * This asserts, per row, old.sourceAccount() == new.sourceAccount(), and —
+ * when a NEW_BOOK adapterOf reader is supplied — that the new adapter is
+ * genuinely NEW_BOOK's registered adapter for that source (catches
+ * right-source-wrong-book: a new address that wraps the right source but
+ * isn't the book's canonical adapter for it).
+ *
+ * Throws BEFORE any impl deploy. Fails LOUD if an adapter has no readable
+ * sourceAccount(). Pure over injected readers; no ethers/chain import here.
+ */
+export async function assertSourceAccountParity(
+  pairs: FeedSwapPair[],
+  readSourceAccount: (adapter: string) => Promise<string>,
+  newBookAdapterOf?: (sourceAccount: string) => Promise<string>,
+): Promise<SourceParityRow[]> {
+  const rows: SourceParityRow[] = [];
+  const problems: string[] = [];
+
+  for (const p of pairs) {
+    const oldSource = await readSourceOrThrow(readSourceAccount, p.old, `${p.label} (${p.pair}) old adapter ${p.old}`);
+    const newSource = await readSourceOrThrow(readSourceAccount, p.new, `${p.label} (${p.pair}) new adapter ${p.new}`);
+
+    if (oldSource.toLowerCase() !== newSource.toLowerCase()) {
+      problems.push(
+        `${p.label} (${p.pair}): old ${p.old} sourceAccount=${oldSource} != new ${p.new} sourceAccount=${newSource} ` +
+        `— row maps this asset to a new adapter tracking a DIFFERENT source (transposed/wrong map).`,
+      );
+    } else if (newBookAdapterOf) {
+      const registered = await newBookAdapterOf(newSource);
+      if (!registered || registered.toLowerCase() !== p.new.toLowerCase()) {
+        problems.push(
+          `${p.label} (${p.pair}): NEW_BOOK.adapterOf(${newSource})=${registered} != mapped new adapter ${p.new} ` +
+          `— right source, but ${p.new} is not NEW_BOOK's registered adapter for it (stale/foreign adapter).`,
+        );
+      }
+    }
+    rows.push({ label: p.label, pair: p.pair, old: p.old, new: p.new, source: oldSource });
+  }
+
+  if (problems.length > 0) {
+    throw new Error(
+      `Feed-swap source-account parity FAILED (${problems.length} of ${pairs.length} row(s)) — refusing to deploy a ` +
+      `mis-mapped Comet impl; no tx sent:\n  ${problems.join('\n  ')}`,
+    );
+  }
+  return rows;
+}
+
+/**
+ * Fail-fast env guard for the MUTATING cutover path. A cutover must have both
+ * NEW_BOOK (so the pre-deploy source-parity guard's adapterOf wrong-book
+ * sub-check actually runs — with NEW_BOOK unset it is silently skipped) and
+ * REGISTRY_ROOT (so the post-upgrade coverage verify can't die on a setup
+ * error AFTER the impl deploy + ProxyAdmin.upgrade have already landed).
+ * Without this, a cutover missing either mutates first and only then throws,
+ * with the wrong-book protection never having run. dry/verify/restore are
+ * read-only and unaffected. Pure predicate; throws naming what's missing.
+ */
+export function requireCutoverEnv(env: { mode: string, newBook?: string, registryRoot?: string }): void {
+  if (env.mode !== 'cutover') return;
+  const missing: string[] = [];
+  if (!env.newBook) missing.push('NEW_BOOK (enables the pre-deploy adapterOf wrong-book check)');
+  if (!env.registryRoot) missing.push('REGISTRY_ROOT (post-upgrade coverage verify)');
+  if (missing.length > 0) {
+    throw new Error(
+      `MODE=cutover requires ${missing.join(' and ')} — refusing to mutate (deploy + upgrade) with either unset; ` +
+      `otherwise the wrong-book guard is skipped and/or the coverage verify only fails AFTER the mutation lands.`,
+    );
+  }
+}

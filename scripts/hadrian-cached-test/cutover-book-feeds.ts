@@ -54,6 +54,8 @@ import {
   resolveCachedComets,
   deriveAdapterSetFromReader,
   assertCoverage,
+  assertSourceAccountParity,
+  requireCutoverEnv,
   formatCoverageReport,
   CometFeedMap,
   CoverageResult,
@@ -88,6 +90,12 @@ const PRICE_BOOK_ABI = [
   'function registrationAt(uint256 index) view returns (bytes32)',
   'function adapterOf(bytes32 sourceAccount) view returns (address)',
 ];
+
+// BookFeedAdapter's one read the parity guard needs — the bytes32 source
+// account it wraps. Both the old (first-book) and new (fixed-book) feeds are
+// BookFeedAdapters so both expose it; a legacy CachedPythAdapter does NOT
+// (it has pythAccount), which the guard turns into a loud abort.
+const BOOK_FEED_ADAPTER_ABI = ['function sourceAccount() view returns (bytes32)'];
 
 interface FeedSwap {
   label: string;
@@ -719,6 +727,10 @@ async function main(): Promise<void> {
   if (mode !== 'dry' && mode !== 'cutover' && mode !== 'restore' && mode !== 'verify') {
     throw new Error(`MODE must be one of dry|cutover|restore|verify, got '${mode}'`);
   }
+  // Fail fast BEFORE any mutation: a cutover missing NEW_BOOK/REGISTRY_ROOT
+  // would otherwise skip the pre-deploy adapterOf wrong-book check and only
+  // surface the misconfig in the post-upgrade verify, AFTER deploy+upgrade.
+  requireCutoverEnv({ mode, newBook: NEW_BOOK, registryRoot: REGISTRY_ROOT });
 
   const [signer] = await ethers.getSigners();
   console.log(`Mode: ${mode}`);
@@ -773,6 +785,27 @@ async function main(): Promise<void> {
   const live = await readLiveSnapshot(comet);
   console.log(`✓ numAssets = ${live.numAssets} (count-stability is enforced by the pre/post live diff below, not a hardcoded expectation).`);
   assertOldFeedsMatch(live);
+
+  // Book->book source-account parity (pre-deploy): every live feed we're about
+  // to swap must map old->new BookFeedAdapters that wrap the SAME on-chain
+  // source account. Catches a transposed FEED_SWAPS row BEFORE the 200M-gas
+  // impl deploy — printPriceSanity only WARNS on >1% and the coverage gate is
+  // set-membership, both blind to which source a new adapter actually tracks.
+  const livePairs = [live.baseTokenPriceFeed, ...live.assets.map((a) => a.priceFeed)].map((oldFeed) => {
+    const swap = OLD_TO_NEW.get(oldFeed.toLowerCase());
+    if (!swap) throw new Error(`live feed ${oldFeed} absent from OLD_TO_NEW — assertOldFeedsMatch should have caught this; main() ordering regressed`);
+    return swap;
+  });
+  const readSourceAccount = (adapter: string): Promise<string> =>
+    new ethers.Contract(adapter, BOOK_FEED_ADAPTER_ABI, signer).sourceAccount();
+  const newBookAdapterOf = NEW_BOOK
+    ? (src: string): Promise<string> => new ethers.Contract(NEW_BOOK, PRICE_BOOK_ABI, signer).adapterOf(src)
+    : undefined;
+  await assertSourceAccountParity(livePairs, readSourceAccount, newBookAdapterOf);
+  console.log(
+    `✓ source-account parity: all ${livePairs.length} old->new adapter pair(s) wrap the same source` +
+    (newBookAdapterOf ? ', each new adapter NEW_BOOK-registered.' : ' (NEW_BOOK adapterOf check skipped — NEW_BOOK unset).'),
+  );
 
   // Both projections come from the SAME live read; oldProjected re-uses the
   // live feeds verbatim (identity), newConfig maps each via newFor — so the
