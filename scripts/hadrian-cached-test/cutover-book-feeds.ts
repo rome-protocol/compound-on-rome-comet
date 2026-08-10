@@ -97,16 +97,21 @@ interface FeedSwap {
 }
 
 // index 0 = base (baseTokenPriceFeed); index 1..8 = assetConfigs[0..7].
+// S5-F3 SECOND cutover (2026-08-10): old = the FIRST PriceBook's (0x619134d4)
+// BookFeedAdapters the comets were cut over to by #48/#49/#50; new = the
+// REDEPLOYED fixed PriceBook's (0x3827ce84, rome-solidity#322 pause-fail-closed)
+// BookFeedAdapters. old side verified live == the comets' current feeds (the
+// MODE=verify STILL_OLD table); new side from pricebook-s5f3-deploy.json.
 const FEED_SWAPS: FeedSwap[] = [
-  { label: 'base (baseTokenPriceFeed)', pair: 'USDC/USD',    old: '0xe6b9bD3d50E3E4bF73724065E6F9f99Fd1b8B027', new: '0x0B1697E8f360271090D540Eaf3A16520C8651d12' },
-  { label: 'asset0',                    pair: 'ETH/USD',     old: '0xED815CAe213b16B092d531D0a511E77D43a3C805', new: '0xDFC77D0Dd2a193C08200ECf9EF6fe5a4bF74E1a7' },
-  { label: 'asset1',                    pair: 'SOL/USD',     old: '0x23F18946e1c3dcB710Be9548F9C66d1e877CC1F6', new: '0x2779176109cbEDD2fDdA63937E087518b309F4BE' },
-  { label: 'asset2',                    pair: 'BTC/USD',     old: '0x63Ecae6b814f4A6a8E31CF4B38C82fee21b5a842', new: '0xF0aF167691D3Bcc49e17902930831AdD58C8cF97' },
-  { label: 'asset3',                    pair: 'JITOSOL/USD', old: '0xF08cb365f3f34A288eDd9223F22F1d9397351B39', new: '0xC9afE27D4074d8f4Fe025360C6CFcB86F555d395' },
-  { label: 'asset4',                    pair: 'MSOL/USD',    old: '0xf01bDDA1091120804f901E0D5f0293ee9616F62b', new: '0x6dDcFF771f8E00D61086243f28e6B629b240c15b' },
-  { label: 'asset5',                    pair: 'JUP/USD',     old: '0xBe43c0d3dFBC10313bF7fBaD67Dc93EC1cA136E7', new: '0x979d8F7b518b96d1a99Fa973Ec133F5705F3b5ae' },
-  { label: 'asset6',                    pair: 'JTO/USD',     old: '0x420cD39f59Eea11e3A8e01A9B3C830ff9a2793ae', new: '0xfBb33E87b5Cf9563BB0a1638EbFEDAc230b8A2C2' },
-  { label: 'asset7',                    pair: 'BONK/USD',    old: '0xC63Af5d67d2A655a087BF635F3980DCe041963de', new: '0xA5D6693323C58B7Da65578C46E041D975aaEb030' },
+  { label: 'base (baseTokenPriceFeed)', pair: 'USDC/USD',    old: '0x0B1697E8f360271090D540Eaf3A16520C8651d12', new: '0x8552B15784f5cA685b7814f60cA0bBe612F56c60' },
+  { label: 'asset0',                    pair: 'ETH/USD',     old: '0xDFC77D0Dd2a193C08200ECf9EF6fe5a4bF74E1a7', new: '0x708Da7aC0401cA2DEB74Aa0a87B0BaaC8262040a' },
+  { label: 'asset1',                    pair: 'SOL/USD',     old: '0x2779176109cbEDD2fDdA63937E087518b309F4BE', new: '0x10d1ab750883696D1be78F68f361D55D27145FB7' },
+  { label: 'asset2',                    pair: 'BTC/USD',     old: '0xF0aF167691D3Bcc49e17902930831AdD58C8cF97', new: '0x88F3eDb4c0A1Ef81756e5594Ba46ca55c71Dfe0A' },
+  { label: 'asset3',                    pair: 'JITOSOL/USD', old: '0xC9afE27D4074d8f4Fe025360C6CFcB86F555d395', new: '0x9a4A2b9586902e18f7107D7F4047b898BE235832' },
+  { label: 'asset4',                    pair: 'MSOL/USD',    old: '0x6dDcFF771f8E00D61086243f28e6B629b240c15b', new: '0x7b3b69c3B6E4C092793473FC727cFE56fbA4576A' },
+  { label: 'asset5',                    pair: 'JUP/USD',     old: '0x979d8F7b518b96d1a99Fa973Ec133F5705F3b5ae', new: '0xE922d82F3ecA3093181f173feE1ff5575Ec60c93' },
+  { label: 'asset6',                    pair: 'JTO/USD',     old: '0xfBb33E87b5Cf9563BB0a1638EbFEDAc230b8A2C2', new: '0x7227a15304D25609D322F66244Ff74A451235Ea3' },
+  { label: 'asset7',                    pair: 'BONK/USD',    old: '0xA5D6693323C58B7Da65578C46E041D975aaEb030', new: '0xB592182D08b11569C2dCaB233bE9B845FfFE574A' },
 ];
 
 // Mirrors contracts/CometCore.sol's internal constants.
