@@ -24,11 +24,24 @@
 //   MODE=cutover ETH_PK=<proxyadmin-owner-key> ... npx hardhat run scripts/hadrian-cached-test/cutover-book-feeds.ts --network hadrian
 //   MODE=restore ETH_PK=<proxyadmin-owner-key> ... npx hardhat run scripts/hadrian-cached-test/cutover-book-feeds.ts --network hadrian
 //
+// MODE=verify (alias: pass --verify) is the coverage gate: it enumerates
+// EVERY cache-fed comet from the registry app manifest (scripts/hadrian-cached-test/lib/cutover-gate.ts's
+// resolveCachedComets — structured comets[] UNIONED with every comet named
+// only in prose notes, e.g. the canonical 0x771D2f21… comet that was never
+// added to comets[]) and asserts every asset's feed is a NEW_BOOK adapter
+// and NOT an OLD_BOOK adapter (or any address outside NEW_BOOK). It also
+// runs automatically at the end of MODE=cutover — this run's own target
+// must land fully on NEW_BOOK (hard failure otherwise); other enumerated
+// comets not yet cut over are reported but don't fail THIS run (matches the
+// real workflow: one comet cut over per PR, #48/#49/#50).
+//   REGISTRY_ROOT=<path> NEW_BOOK=<addr> [OLD_BOOK=<addr>] \
+//     MODE=verify npx hardhat run scripts/hadrian-cached-test/cutover-book-feeds.ts --network hadrian
+//
 // hardhat.config.ts requires these 5 stub env vars for ANY command against
 // ANY network (validated at config-load time, unconditionally):
 //   ETHERSCAN_KEY=stub SNOWTRACE_KEY=stub MAINNET_QUICKNODE_LINK=stub \
 //   UNICHAIN_QUICKNODE_LINK=stub LINEA_QUICKNODE_LINK=stub
-// MODE=dry needs no ETH_PK — it sends zero transactions, so hardhat's default
+// MODE=dry/verify need no ETH_PK — both are read-only, so hardhat's default
 // MNEMONIC (baked into hardhat.config.ts, a well-known public test phrase) is
 // sufficient. MODE=cutover/restore need the ProxyAdmin owner's key.
 
@@ -36,6 +49,15 @@ import { ethers } from 'hardhat';
 import { BigNumber } from 'ethers';
 import * as fs from 'fs';
 import * as path from 'path';
+import { RegistryClient } from '../registry-driven-deploy/lib/registry-client';
+import {
+  resolveCachedComets,
+  deriveAdapterSetFromReader,
+  assertCoverage,
+  formatCoverageReport,
+  CometFeedMap,
+  CoverageResult,
+} from './lib/cutover-gate';
 
 // ─── Ground truth (verified on-chain 2026-08-08; re-verified live below) ───
 // Comet-identity constants. Default to the first cache-fed comet cut over
@@ -47,6 +69,25 @@ const COMET_PROXY = process.env.COMET_PROXY || '0xfc322489D4089AdCC79074C8058Fd2
 const PROXY_ADMIN = process.env.PROXY_ADMIN || '0x60d7BD2e676C4626Bb0B99Ce9c471aaB212A1b61';
 const ORIGINAL_IMPL = process.env.ORIGINAL_IMPL || '0x1393f6cE821332C42c7311AAAF52CE40B831Fa09'; // restore target
 const EXPECTED_EXECUTOR = '0x1f4946Be340F06c46A50E65084790968aBcc48F6'; // ProxyAdmin.owner() — F6, same for both cache-fed comets
+
+// ─── MODE=verify (coverage gate) config ─────────────────────────────────────
+// NEW_BOOK has no safe default — it's the redeployed (fixed) PriceBook this
+// cutover is moving TO, and doesn't exist until that deploy happens.
+// OLD_BOOK defaults to the live (first) PriceBook (rome-solidity
+// deployments/hadrian.json#PriceBook.address, deployed 2026-08-08) being
+// retired. REGISTRY_ROOT has no safe default (private repo, per-machine
+// checkout path) — same convention as scripts/registry-driven-deploy's
+// documented REGISTRY_ROOT=/path/to/registry-checkout.
+const NEW_BOOK = process.env.NEW_BOOK || '';
+const OLD_BOOK = process.env.OLD_BOOK || '0x619134d4d5e1e98ea10c9a6782957df24837fdda';
+const REGISTRY_ROOT = process.env.REGISTRY_ROOT || '';
+const CHAIN_ID = Number(process.env.CHAIN_ID || '200010');
+
+const PRICE_BOOK_ABI = [
+  'function registrationCount() view returns (uint256)',
+  'function registrationAt(uint256 index) view returns (bytes32)',
+  'function adapterOf(bytes32 sourceAccount) view returns (address)',
+];
 
 interface FeedSwap {
   label: string;
@@ -426,6 +467,94 @@ async function assertGetPriceSane(comet: any, feeds: string[]): Promise<void> {
   }
 }
 
+// ── MODE=verify (coverage gate) live wiring ──────────────────────────────
+// Everything below is a thin ethers/registry adapter over the pure logic in
+// ./lib/cutover-gate.ts — enumeration (G1) and coverage assertion (G2) are
+// unit-tested there with mocks; this is just "how do we get real data into
+// them" for an actual run.
+
+// One comet's live feed map (base + every collateral asset), for ANY comet
+// address — unlike readLiveSnapshot (config-diff proof for the single
+// COMET_PROXY target), this only reads what the coverage gate needs.
+async function buildCometFeedMap(cometAddress: string, signerOrProvider: any): Promise<CometFeedMap> {
+  const comet = new ethers.Contract(cometAddress, COMET_READ_ABI, signerOrProvider);
+  const [baseTokenPriceFeed, numAssetsRaw] = await Promise.all([comet.baseTokenPriceFeed(), comet.numAssets()]);
+  const numAssets = Number(numAssetsRaw);
+  const infos = await Promise.all(Array.from({ length: numAssets }, (_, i) => comet.getAssetInfo(i)));
+  const feeds: CometFeedMap = { base: baseTokenPriceFeed };
+  infos.forEach((info: any, i: number) => {
+    feeds[`asset${i}`] = info.priceFeed;
+  });
+  return feeds;
+}
+
+// A book's full BookFeedAdapter clone set, derived live via
+// registrationAt/adapterOf (PriceBook.sol's read surface).
+async function deriveLiveAdapterSet(bookAddress: string, signerOrProvider: any): Promise<Set<string>> {
+  const book = new ethers.Contract(bookAddress, PRICE_BOOK_ABI, signerOrProvider);
+  return deriveAdapterSetFromReader({
+    registrationCount: () => book.registrationCount(),
+    registrationAt: (i: number) => book.registrationAt(i),
+    adapterOf: (acct: string) => book.adapterOf(acct),
+  });
+}
+
+// G1 + G2, wired to the registry + live chain. Never throws on a per-comet
+// read failure — that comet is simply absent from cometFeeds, which
+// assertCoverage turns into a named MISSING_COMET failure in the report
+// (loud, but doesn't hide every OTHER comet's status in the same run).
+// Throws only on setup problems (missing env, missing registry entry) or on
+// resolveCachedComets's own fail-loud conditions (stale map, empty set).
+async function runVerify(signerOrProvider: any): Promise<CoverageResult> {
+  if (!NEW_BOOK) throw new Error('MODE=verify requires NEW_BOOK (the redeployed PriceBook address) — not set.');
+  if (!OLD_BOOK) throw new Error('MODE=verify requires OLD_BOOK (the PriceBook being retired) — not set.');
+  if (!REGISTRY_ROOT) {
+    throw new Error(
+      'MODE=verify requires REGISTRY_ROOT (path to a rome-protocol/registry checkout), e.g. ' +
+      'REGISTRY_ROOT=/path/to/registry-checkout — not set.',
+    );
+  }
+
+  console.log(`\n--- Coverage verify: enumerating cache-fed comets (registry chainId=${CHAIN_ID}, root=${REGISTRY_ROOT}) ---`);
+  const client = new RegistryClient({ registryRoot: REGISTRY_ROOT });
+  const manifest = client.getCompoundDeployment(CHAIN_ID);
+  if (!manifest) throw new Error(`no apps/compound entry for chainId=${CHAIN_ID} under ${REGISTRY_ROOT}`);
+
+  const { comets, excluded, warnings } = resolveCachedComets(manifest);
+  for (const w of warnings) console.warn(`⚠ ${w}`);
+  console.log(`✓ enumerated ${comets.length} cache-fed comet(s):`);
+  for (const c of comets) console.log(`    ${c.label} (${c.address}) [${c.source}]`);
+  if (excluded.length > 0) {
+    console.log(`  excluded (raw/non-cached lane, never gated):`);
+    for (const c of excluded) console.log(`    ${c.label} (${c.address}) [${c.source}]`);
+  }
+
+  const cometFeeds = new Map<string, CometFeedMap>();
+  for (const c of comets) {
+    try {
+      cometFeeds.set(c.address.toLowerCase(), await buildCometFeedMap(c.address, signerOrProvider));
+    } catch (e: any) {
+      console.error(`✗ could not read comet ${c.label} (${c.address}) on-chain: ${e?.message ?? e}`);
+    }
+  }
+
+  const [newBookAdapters, oldBookAdapters] = await Promise.all([
+    deriveLiveAdapterSet(NEW_BOOK, signerOrProvider),
+    deriveLiveAdapterSet(OLD_BOOK, signerOrProvider),
+  ]);
+  console.log(`✓ NEW_BOOK ${NEW_BOOK}: ${newBookAdapters.size} registered adapter(s).`);
+  console.log(`✓ OLD_BOOK ${OLD_BOOK}: ${oldBookAdapters.size} registered adapter(s).`);
+
+  const result = assertCoverage({
+    enumeratedComets: comets.map((c) => c.address),
+    cometFeeds,
+    newBookAdapters,
+    oldBookAdapters,
+  });
+  console.log('\n' + formatCoverageReport(result));
+  return result;
+}
+
 // Rates are byte-identical across the upgrade (see toConfiguration's
 // per-second/per-year note), so any growth here is ordinary interest accrual
 // over the few seconds the deploy+upgrade txs took, not evidence the swap
@@ -543,6 +672,37 @@ async function runCutover(comet: any, pa: any, signer: any, live: LiveSnapshot, 
   const stateFile = path.join('scripts', 'hadrian-cached-test', 'state-book-cutover.json');
   fs.writeFileSync(stateFile, JSON.stringify(state, null, 2) + '\n');
 
+  console.log('\n--- Post-cutover coverage verify (auto) ---');
+  const verifyResult = await runVerify(signer);
+  const targetRows = verifyResult.rows.filter((r) => sameAddr(r.comet, COMET_PROXY));
+  if (targetRows.length === 0) {
+    // Without this check, an un-enumerated target makes targetBad below
+    // VACUOUSLY empty (filtering zero rows), so the script would fall
+    // through and could print "✓ full coverage" having never actually
+    // looked at COMET_PROXY at all — coverage silently unverified for the
+    // one comet this run just touched.
+    throw new Error(
+      `post-cutover verify: this run's target (${COMET_PROXY}) was not enumerated by the coverage gate at all — ` +
+      `the registry manifest doesn't surface it as a known cache-fed comet, so coverage CANNOT be confirmed. ` +
+      `Add it to KNOWN_HADRIAN_COMETS (or fix the manifest) before trusting this cutover.`,
+    );
+  }
+  const targetBad = targetRows.filter((r) => r.status !== 'OK');
+  if (targetBad.length > 0) {
+    throw new Error(
+      `post-cutover verify: THIS run's own target (${COMET_PROXY}) is not fully on NEW_BOOK — ` +
+      `${targetBad.length} asset(s) failed (see table above). The upgrade tx landed but coverage doesn't confirm it.`,
+    );
+  }
+  if (!verifyResult.pass) {
+    console.warn(
+      `\n⚠ ${COMET_PROXY} is fully cut over, but OTHER enumerated cache-fed comets are not yet on NEW_BOOK ` +
+      `(see FAIL rows above) — cut those over before retiring OLD_BOOK.`,
+    );
+  } else {
+    console.log('\n✓ full coverage: every enumerated cache-fed comet is on NEW_BOOK.');
+  }
+
   console.log('\nCUTOVER COMPLETE.');
   console.log(`  new impl: ${impl.address}`);
   console.log(`  state:    ${stateFile}`);
@@ -550,14 +710,24 @@ async function runCutover(comet: any, pa: any, signer: any, live: LiveSnapshot, 
 }
 
 async function main(): Promise<void> {
-  const mode = process.env.MODE || 'dry';
-  if (mode !== 'dry' && mode !== 'cutover' && mode !== 'restore') {
-    throw new Error(`MODE must be one of dry|cutover|restore, got '${mode}'`);
+  const mode = process.argv.includes('--verify') ? 'verify' : (process.env.MODE || 'dry');
+  if (mode !== 'dry' && mode !== 'cutover' && mode !== 'restore' && mode !== 'verify') {
+    throw new Error(`MODE must be one of dry|cutover|restore|verify, got '${mode}'`);
   }
 
   const [signer] = await ethers.getSigners();
   console.log(`Mode: ${mode}`);
   console.log(`Signer: ${signer.address}`);
+
+  if (mode === 'verify') {
+    const result = await runVerify(signer);
+    if (!result.pass) {
+      throw new Error(`coverage verify FAILED — ${result.failures.length} asset(s) not on NEW_BOOK (see table above).`);
+    }
+    console.log('\nCOVERAGE VERIFIED — every enumerated cache-fed comet is fully on NEW_BOOK.');
+    return;
+  }
+
   console.log(`Comet proxy: ${COMET_PROXY}`);
   console.log(`ProxyAdmin: ${PROXY_ADMIN}\n`);
 

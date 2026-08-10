@@ -143,5 +143,5 @@ If TypeScript catches your scripts: imports like `ethers.BigNumber` work as a va
 |---|---|
 | `contracts/*` (Compound vendored) | `yarn test` + `yarn forge:test` + `yarn scenario` |
 | `contracts/LiquidationRouter.sol` | `yarn test test/LiquidationRouter*` |
-| `scripts/hadrian-cached-test/` | `yarn lint` + `yarn tsc` + manually run the 5-script Hadrian smoke playbook above. No unit tests required (these are deploy + smoke scripts) |
+| `scripts/hadrian-cached-test/` | `yarn lint` + `yarn tsc` + manually run the 5-script Hadrian smoke playbook above. Deploy/smoke scripts still need no unit tests, but pure logic pulled into `lib/` (e.g. `lib/cutover-gate.ts`) does — run via `npx hardhat test scripts/hadrian-cached-test/tests/<name>.test.ts` (mocha+chai, same pattern as `scripts/registry-driven-deploy/tests/`) |
 | `hardhat.config.ts` | `yarn tsc` + a deploy dry-run on the network you changed |
