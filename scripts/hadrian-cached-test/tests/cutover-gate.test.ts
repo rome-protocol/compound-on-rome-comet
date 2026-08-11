@@ -17,6 +17,8 @@ import {
   deriveAdapterSetFromReader,
   deriveAdapterSetFromDeployRecord,
   assertCoverage,
+  assertSourceAccountParity,
+  requireCutoverEnv,
   CometFeedMap,
 } from '../lib/cutover-gate';
 
@@ -308,5 +310,104 @@ describe('assertCoverage (G2 — zero old/foreign references, or FAIL naming exa
     });
     expect(result.pass).to.equal(false);
     expect(result.rows[0].status).to.equal('STILL_OLD');
+  });
+});
+
+describe('assertSourceAccountParity (pre-deploy book->book guard — old.sourceAccount() == new.sourceAccount())', () => {
+  const SRC = {
+    usdc: '0x' + '11'.repeat(32),
+    eth: '0x' + '22'.repeat(32),
+    sol: '0x' + '33'.repeat(32),
+  };
+  // Correct map: old and new adapter of each pair wrap the SAME source.
+  const src: Record<string, string> = {
+    '0xoldusdc': SRC.usdc, '0xnewusdc': SRC.usdc,
+    '0xoldeth': SRC.eth, '0xneweth': SRC.eth,
+    '0xoldsol': SRC.sol, '0xnewsol': SRC.sol,
+  };
+  const reader = (a: string): Promise<string> => Promise.resolve(src[a.toLowerCase()]);
+  const goodPairs = [
+    { label: 'base', pair: 'USDC/USD', old: '0xOLDUSDC', new: '0xNEWUSDC' },
+    { label: 'asset0', pair: 'ETH/USD', old: '0xOLDETH', new: '0xNEWETH' },
+    { label: 'asset1', pair: 'SOL/USD', old: '0xOLDSOL', new: '0xNEWSOL' },
+  ];
+
+  it('PASSES when every old/new pair wraps the same source account', async () => {
+    const rows = await assertSourceAccountParity(goodPairs, reader);
+    expect(rows).to.have.length(3);
+    expect(rows[0].source.toLowerCase()).to.equal(SRC.usdc);
+  });
+
+  it('THROWS on a transposed row (old -> new mapped to a DIFFERENT source)', async () => {
+    const transposed = [{ ...goodPairs[0], new: '0xNEWETH' }, goodPairs[1], goodPairs[2]];
+    let err: Error | undefined;
+    try { await assertSourceAccountParity(transposed, reader); } catch (e) { err = e as Error; }
+    expect(err, 'expected a parity throw').to.not.be.undefined;
+    expect(err!.message).to.match(/parity FAILED/i);
+    expect(err!.message).to.include('USDC/USD');
+  });
+
+  it('THROWS LOUD when an adapter has no readable sourceAccount() (legacy CachedPythAdapter pythAccount)', async () => {
+    const cachedReader = (a: string): Promise<string> =>
+      a.toLowerCase() === '0xoldusdc'
+        ? Promise.reject(new Error('call revert (no sourceAccount)'))
+        : Promise.resolve(src[a.toLowerCase()]);
+    let err: Error | undefined;
+    try { await assertSourceAccountParity(goodPairs, cachedReader); } catch (e) { err = e as Error; }
+    expect(err, 'expected an absent-sourceAccount throw').to.not.be.undefined;
+    expect(err!.message).to.match(/no readable sourceAccount/i);
+    expect(err!.message).to.match(/pythAccount/);
+  });
+
+  it('THROWS when the new adapter is not NEW_BOOK\'s registered adapter for that source (right-source-wrong-book)', async () => {
+    const adapterOf = (source: string): Promise<string> => {
+      if (source.toLowerCase() === SRC.usdc) return Promise.resolve('0xFOREIGNUSDC');
+      const map: Record<string, string> = { [SRC.eth]: '0xNEWETH', [SRC.sol]: '0xNEWSOL' };
+      return Promise.resolve(map[source.toLowerCase()]);
+    };
+    let err: Error | undefined;
+    try { await assertSourceAccountParity(goodPairs, reader, adapterOf); } catch (e) { err = e as Error; }
+    expect(err, 'expected an adapterOf-mismatch throw').to.not.be.undefined;
+    expect(err!.message).to.match(/adapterOf/i);
+  });
+
+  it('PASSES with the adapterOf check when each new adapter IS NEW_BOOK-registered for its source', async () => {
+    const adapterOf = (source: string): Promise<string> => {
+      const map: Record<string, string> = { [SRC.usdc]: '0xNEWUSDC', [SRC.eth]: '0xNEWETH', [SRC.sol]: '0xNEWSOL' };
+      return Promise.resolve(map[source.toLowerCase()]);
+    };
+    const rows = await assertSourceAccountParity(goodPairs, reader, adapterOf);
+    expect(rows).to.have.length(3);
+  });
+
+  it('THROWS on a zero/unset sourceAccount()', async () => {
+    const zeroReader = (a: string): Promise<string> =>
+      a.toLowerCase() === '0xoldusdc'
+        ? Promise.resolve('0x' + '00'.repeat(32))
+        : Promise.resolve(src[a.toLowerCase()]);
+    let err: Error | undefined;
+    try { await assertSourceAccountParity(goodPairs, zeroReader); } catch (e) { err = e as Error; }
+    expect(err, 'expected a zero-source throw').to.not.be.undefined;
+    expect(err!.message).to.match(/zero|empty/i);
+  });
+});
+
+describe('requireCutoverEnv (fail-fast BEFORE the mutating cutover path)', () => {
+  it('THROWS in cutover mode when NEW_BOOK is unset (adapterOf check would silently skip on the mutating path)', () => {
+    expect(() => requireCutoverEnv({ mode: 'cutover', newBook: '', registryRoot: '/reg' })).to.throw(/NEW_BOOK/);
+  });
+
+  it('THROWS in cutover mode when REGISTRY_ROOT is unset (verify would only fail AFTER the upgrade)', () => {
+    expect(() => requireCutoverEnv({ mode: 'cutover', newBook: '0xbook', registryRoot: '' })).to.throw(/REGISTRY_ROOT/);
+  });
+
+  it('does NOT throw in cutover mode when both are set', () => {
+    expect(() => requireCutoverEnv({ mode: 'cutover', newBook: '0xbook', registryRoot: '/reg' })).to.not.throw();
+  });
+
+  it('does NOT throw in dry/verify/restore even when both are unset (read-only paths)', () => {
+    for (const mode of ['dry', 'verify', 'restore']) {
+      expect(() => requireCutoverEnv({ mode, newBook: '', registryRoot: '' }), mode).to.not.throw();
+    }
   });
 });
