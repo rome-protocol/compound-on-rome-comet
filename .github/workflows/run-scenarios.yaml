@@ -1,7 +1,12 @@
 name: Run Scenarios
 on:
   workflow_dispatch:
+# `checks: write` is for dorny/test-reporter, which publishes results as a check
+# run. `contents: read` is explicit because declaring any scope sets the rest to
+# `none` — checkout survives that here only because the repo is public, and would
+# 403 if it ever went private.
 permissions:
+  contents: read
   checks: write
 
 env:
