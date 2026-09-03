@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main, master]
 
+# Least privilege, pinned rather than inherited: without this the token gets
+# whatever the org/repo default grants, so a later default change would
+# silently widen this workflow.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
