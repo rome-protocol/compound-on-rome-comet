@@ -249,7 +249,7 @@ These simulations are extremely useful for testing deployments before actually c
 
 1. Create the deployment script and configuration file, and test locally
 2. Open a PR containing the new deployment directory files
-3. Trigger the `deploy-market` workflow action through the GitHub UI
+3. Run the deploy command-line task (the `deploy-market` GitHub Actions workflow this used to name was upstream tooling for Compound's own networks and has been removed — it could not target a Rome chain)
 4. Inspect the new `roots.json` which the workflow automatically commited to your PR
 5. Start using the new protocol deployment and/or create further migrations to modify it
 
@@ -262,7 +262,7 @@ These simulations are extremely useful for testing deployments before actually c
 
 Source code verification is a relatively important part of deployments currently.
 The 'spider' tool we use to crawl relevant addresses from the root addresses by default relies on pulling verified contract ABIs.
-Verification happens normally as part of the deploy command-line task (the same command triggered by the `deploy-market` workflow).
+Verification happens normally as part of the deploy command-line task (the same command referenced in the Deploy Workflow steps above).
 Since deployments are idempotent by default, the deploy command can also be used to *just* verify the existing contracts (an explicit way to do this is via the `--no-deploy` flag).
 When all contracts are already deployed, the only actions performed will be to verify the contracts remaining in the verification cache.
 The script *always* attempts to verify the Comet implementation contract, since this is deployed via a factory and the status is relatively unknown to it.
