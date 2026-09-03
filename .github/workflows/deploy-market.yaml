@@ -26,6 +26,12 @@ on:
         description: Simulate
       eth_pk:
         description: Ignore if you plan to use WalletConnect, otherwise, you can paste in a Ethereum private key
+# Least privilege, pinned rather than inherited: without this the token gets
+# whatever the org/repo default grants, so a later default change would
+# silently widen this workflow.
+permissions:
+  contents: write
+
 jobs:
   deploy-market:
     name: Deploy Market

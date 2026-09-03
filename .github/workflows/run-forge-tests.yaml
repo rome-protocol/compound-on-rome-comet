@@ -2,6 +2,12 @@ name: Run Forge Tests
 on:
   workflow_dispatch:
   pull_request:
+# Least privilege, pinned rather than inherited: without this the token gets
+# whatever the org/repo default grants, so a later default change would
+# silently widen this workflow.
+permissions:
+  contents: read
+
 jobs:
   forge-tests:
     name: Forge tests

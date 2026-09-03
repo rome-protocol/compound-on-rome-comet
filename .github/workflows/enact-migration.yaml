@@ -48,6 +48,13 @@ on:
         description: Use Tenderly for simulation
         required: false
         default: false
+# Least privilege, pinned rather than inherited: without this the token gets
+# whatever the org/repo default grants, so a later default change would
+# silently widen this workflow.
+permissions:
+  contents: write
+  actions: read
+
 jobs:
   enact-migration:
     name: Enact Migration
