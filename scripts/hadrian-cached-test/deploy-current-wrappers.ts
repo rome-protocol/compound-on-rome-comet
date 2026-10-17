@@ -23,7 +23,6 @@
 import { ethers } from 'hardhat';
 import * as fs from 'fs';
 import * as path from 'path';
-import { callTx } from '../_lib/gas';
 import { fetchHadrianWrappers } from './registry';
 
 const SOURCE_COMET = process.env.SOURCE_COMET || '0xfc322489D4089AdCC79074C8058Fd257c63622D8';
@@ -105,7 +104,7 @@ async function main() {
   const baseOldSymbol = await sym(live.baseToken);
   const baseWrapper = await current(live.baseToken);
   if (!baseWrapper) throw new Error('no current base wrapper');
-  const skipped: { symbol: string; why: string }[] = [];
+  const skipped: { symbol: string, why: string }[] = [];
   const assets: any[] = [];
   for (const info of infos) {
     const symbol = await sym(info.asset);
