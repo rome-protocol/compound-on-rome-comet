@@ -90,5 +90,20 @@
         "dropAmountWei": "10000000"
       }
     ]
+  },
+  "verify": {
+    "wallet": "0xFb66ee7E5F06e8269997715a3Fa203f13584baA0",
+    "prices": {
+      "wUSDC": "99987190",
+      "wETH": "241729045475",
+      "wSOL": "10396761658"
+    },
+    "txHashes": {
+      "book.refreshAll": "0xf9e39acb8f03f019a64139e33621ef73b7810b6e19c62f350b3be1f7ecad367a",
+      "base.approve": "0xd1fd0c77bbc11c43b500c33f81783cbd44e4cd7234200ceb59b092fe9e0150c7",
+      "comet.supply": "0x2e9ec5b28155953da260061da7c2d2c700af0e399ec926adefcfd14fb6b0b31b",
+      "comet.withdraw": "0xec1a98123024cf0c00f41162d3384b6e4f0331aa807face29ea47e056a6bbfea",
+      "faucet.claim": "0x1be1e18a4bc6d89e16fb12933a63ced785c46c2c2c509f5ca80c5da2c190ed42"
+    }
   }
 }

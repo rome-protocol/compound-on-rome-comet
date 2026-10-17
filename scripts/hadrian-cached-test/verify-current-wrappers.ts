@@ -11,6 +11,7 @@
 import { ethers } from 'hardhat';
 import * as fs from 'fs';
 import * as path from 'path';
+import { callTx } from '../_lib/gas';
 
 const STATE_FILE = path.join('scripts', 'hadrian-cached-test', 'state-current-wrappers.json');
 const BOOK = '0xbb8961b840610934140d96f41bc0d38835774550';
@@ -58,11 +59,11 @@ async function main() {
   const before = await base.balanceOf(me.address);
   await step('base.approve', base.approve(st.cometProxy, SUPPLY, tx));
   console.log(`allowance: ${await base.allowance(me.address, st.cometProxy)}`);
-  await step('comet.supply', comet.supply(st.baseAsset.address, SUPPLY, tx));
+  await step('comet.supply', callTx(comet, 'supply', [st.baseAsset.address, SUPPLY], { type: 0, gasPrice }));
   const supplied = await comet.balanceOf(me.address);
   console.log(`comet.balanceOf after supply: ${supplied}  (wallet base ${await base.balanceOf(me.address)})`);
   if (supplied.lt(SUPPLY.sub(1))) throw new Error('supply not reflected in comet.balanceOf');
-  await step('comet.withdraw', comet.withdraw(st.baseAsset.address, ethers.constants.MaxUint256, tx));
+  await step('comet.withdraw', callTx(comet, 'withdraw', [st.baseAsset.address, ethers.constants.MaxUint256], { type: 0, gasPrice }));
   const after = await comet.balanceOf(me.address);
   console.log(`comet.balanceOf after withdraw: ${after}  (wallet base ${await base.balanceOf(me.address)}, was ${before})`);
 
