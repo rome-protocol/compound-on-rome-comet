@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "1",
+  "chainId": 200010,
+  "chainSlug": "hadrian",
+  "compoundVersion": "v3-0.16.0",
+  "baseAsset": {
+    "type": "wrapper",
+    "address": "0xbce339ba4c3a8de3bb8af1c5539e6ac11da3112d",
+    "underlyingMint": "3b442cb3912157f13a933d0134282d032b5ffecd01a2dbf1b7790608df002ea7",
+    "displaySymbol": "wUSDC",
+    "sourceRef": "rome-solidity@master"
+  },
+  "comets": [
+    {
+      "label": "canonical",
+      "address": "0x642fF1b5983FcDB9eA565B9FF56ac41c0c36d218",
+      "extensionDelegate": "0x60C61741457dBB49555b176ecC5AE4E57651B505",
+      "implementation": "0x49000C546Ef26dF2BF7e6baF54363e61cB71c1fA",
+      "proxyAdmin": "0xaC1ED2Ac07D764f9Bd52FcF8D52610E7970F5eE7",
+      "collateralAssets": [
+        "0x02aeace038269f9961c93d04dcacd6fb3adfa55f",
+        "0x39f36444fcb79b3e691544aee2a832ebef54ca9f"
+      ]
+    }
+  ],
+  "bulker": "0x18A2DbfeD0d1f1094289E56e333A14c12C47E73b",
+  "collateralAssets": [
+    {
+      "symbol": "wETH",
+      "address": "0x02aeace038269f9961c93d04dcacd6fb3adfa55f",
+      "priceFeed": "0x03Abaf04882820E0c61DC8182b5e3eBaaC20226d",
+      "priceFeedKind": "cached-pyth",
+      "decimals": 8
+    },
+    {
+      "symbol": "wSOL",
+      "address": "0x39f36444fcb79b3e691544aee2a832ebef54ca9f",
+      "priceFeed": "0xcC9F877aC65521CE952cD784635934C88579bF55",
+      "priceFeedKind": "cached-pyth",
+      "decimals": 9
+    }
+  ],
+  "baseTokenPriceFeed": "0xCE5F78af032489748967c08908ff1E923d223Faf",
+  "baseTokenPriceFeedKind": "cached-pyth",
+  "jito": {
+    "enabled": false,
+    "reason": "Hadrian is anchored to Solana devnet; Jito Block Engine is not available there. Multi-action leverage flows fall back to N-tx sequential UX.",
+    "endpoint": null
+  },
+  "ux": {
+    "singleTxFlows": [
+      "supply",
+      "supplyTo",
+      "withdraw",
+      "withdrawTo",
+      "borrow",
+      "transferAsset",
+      "allow",
+      "supplyCollatBorrowBase",
+      "twoCollatSupply"
+    ],
+    "bundleFlows": [],
+    "fallbackFlows": [
+      "sequentialNTx"
+    ]
+  },
+  "demoUrl": "https://aerarium.devnet.romeprotocol.xyz",
+  "faucet": {
+    "address": "0xf149A784Ccd0c58cF22cbDAE3F67edc76CD1e236",
+    "gasDropWei": "0",
+    "tokens": [
+      {
+        "symbol": "wETH",
+        "address": "0x02aeace038269f9961c93d04dcacd6fb3adfa55f",
+        "decimals": 8,
+        "dropAmountWei": "100000"
+      },
+      {
+        "symbol": "wSOL",
+        "address": "0x39f36444fcb79b3e691544aee2a832ebef54ca9f",
+        "decimals": 9,
+        "dropAmountWei": "10000000"
+      }
+    ]
+  },
+  "rpcRef": "chains/200010-hadrian/chain.json#rpcUrl",
+  "deployedAt": "2026-10-17T20:07:49.483Z",
+  "sourceCommits": {
+    "comet": "comet@0.1.0",
+    "wrapper": "rome-solidity@master",
+    "romeEvm": "rome-evm-private@HEAD"
+  },
+  "status": "live",
+  "notes": "2026-10-17 redeploy on the current SPL wrappers (the 2026-09 rotation retired the previous set; the program now refuses DELEGATECALL into a precompile that signs as the caller). Same parameters as the previous canonical comet (0xfc322489...), base wUSDC + the 2 collaterals that have a current wrapper (wETH, wSOL); the other 6 (wBTC, wJitoSOL, wmSOL, wJUP, wJTO, wBONK) have no current wrapper and are not listed. Feeds are PriceBook 0xbb8961b8 BookFeedAdapters (maxStaleness 900 s); reads revert StalePriceFeed unless the book is refreshed (refreshAll) within 900 s. Governor, pause guardian and proxy-admin owner: 0x1f4946Be340F06c46A50E65084790968aBcc48F6. The bulker is unchanged and still bound to the retired wUSDC."
+}

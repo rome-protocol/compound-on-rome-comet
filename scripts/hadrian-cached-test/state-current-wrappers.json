@@ -1,0 +1,109 @@
+{
+  "deployedAt": "2026-10-17T20:07:49.483Z",
+  "deployer": "0x1f4946Be340F06c46A50E65084790968aBcc48F6",
+  "network": "hadrian",
+  "chainId": 200010,
+  "sourceComet": "0xfc322489D4089AdCC79074C8058Fd257c63622D8",
+  "baseAsset": {
+    "symbol": "wUSDC",
+    "address": "0xbce339ba4c3a8de3bb8af1c5539e6ac11da3112d",
+    "oldAddress": "0xD4cC34b67C805d472B5a709a22a1037F6B16ef28",
+    "priceFeed": "0xCE5F78af032489748967c08908ff1E923d223Faf"
+  },
+  "collateralAssets": [
+    {
+      "symbol": "wETH",
+      "address": "0x02aeace038269f9961c93d04dcacd6fb3adfa55f",
+      "oldAddress": "0x8c2c1486CADF7D07312908a065F14aF65F56bE7E",
+      "pair": "ETH/USD",
+      "priceFeed": "0x03Abaf04882820E0c61DC8182b5e3eBaaC20226d"
+    },
+    {
+      "symbol": "wSOL",
+      "address": "0x39f36444fcb79b3e691544aee2a832ebef54ca9f",
+      "oldAddress": "0x1DeCe035621c65a90349B56A801068B439Fa4201",
+      "pair": "SOL/USD",
+      "priceFeed": "0xcC9F877aC65521CE952cD784635934C88579bF55"
+    }
+  ],
+  "skipped": [
+    {
+      "symbol": "wBTC",
+      "why": "no current registry wrapper for its mint"
+    },
+    {
+      "symbol": "wJitoSOL",
+      "why": "no current registry wrapper for its mint"
+    },
+    {
+      "symbol": "wmSOL",
+      "why": "no current registry wrapper for its mint"
+    },
+    {
+      "symbol": "wJUP",
+      "why": "no current registry wrapper for its mint"
+    },
+    {
+      "symbol": "wJTO",
+      "why": "no current registry wrapper for its mint"
+    },
+    {
+      "symbol": "wBONK",
+      "why": "no current registry wrapper for its mint"
+    }
+  ],
+  "cometProxy": "0x642fF1b5983FcDB9eA565B9FF56ac41c0c36d218",
+  "cometImpl": "0x49000C546Ef26dF2BF7e6baF54363e61cB71c1fA",
+  "cometExt": "0x60C61741457dBB49555b176ecC5AE4E57651B505",
+  "cometProxyAdmin": "0xaC1ED2Ac07D764f9Bd52FcF8D52610E7970F5eE7",
+  "txHashes": {
+    "proxyAdmin": "0xbea5c44e1835a65633e088977e3d94f8f04eabc611073bf99f0223e682973bc5",
+    "extensionDelegate": "0x2d428c340414757b95a7f92f3bd465a50564bdf4e89334ea7e9cd096ea916897",
+    "implementation": "0xade70d67d10984089476e0c0d9a0ebf465949a35ab0617687dcedd09a6c58c2a",
+    "proxy": "0x809f4dec90b6d9027cc0abd8f13e66e4577203c3f0e611f9c8028d310fc9030c",
+    "initializeStorage": "0xefa2358ebe8256519388855876854ce1ca82bc6ea905b9c512916a41064276b0",
+    "ata:0xbce339ba4c3a8de3bb8af1c5539e6ac11da3112d": "0xd6df75dda3097d39a4d7031e76abdcaf3c738d05b780a996f2f14c146fac7e21",
+    "ata:0x02aeace038269f9961c93d04dcacd6fb3adfa55f": "0x65a09c897482dae5a61d81e6ae7ca4caff58b4555ef234f6cff8c0512d4f536f",
+    "ata:0x39f36444fcb79b3e691544aee2a832ebef54ca9f": "0x470082ab3f8e41abc0beabc7b6fe5b9df41db8f276238bade3561645b493ce64",
+    "faucet": "0xf8e296576dd0403d899a6d066cc99bedb27507c91fd621c69d79379d4dddaa87",
+    "faucet:addToken:wETH": "0xfb2605c96ea293dcb4fec6dd429d9e6e2569402f38d4c70dd1eabad36d5a9f0c",
+    "faucet:ata:wETH": "0xbe37d52323660b1799bf6d1e8366b5453e63a2823d8dea8a3931ce7198f1143f",
+    "faucet:fund:wETH": "0xde85e7add27e1052654f15a6dc16d2d4fe25f3c00b863ee5940a1154458353b2",
+    "faucet:addToken:wSOL": "0x146af08539af91096d5bd89872091be8eac6431918864248a0da90d7519d79fb",
+    "faucet:ata:wSOL": "0x8d65743762b99c6e707d33eb4d8d7611e7760c6200ee05d3d5e6f3c85c11940b",
+    "faucet:fund:wSOL": "0x2992e4ec0d82b94e8c108709aa4f684dc6736286c855500de188e5a993ff3e0a"
+  },
+  "faucet": {
+    "address": "0xf149A784Ccd0c58cF22cbDAE3F67edc76CD1e236",
+    "gasDropWei": "0",
+    "tokens": [
+      {
+        "symbol": "wETH",
+        "address": "0x02aeace038269f9961c93d04dcacd6fb3adfa55f",
+        "decimals": 8,
+        "dropAmountWei": "100000"
+      },
+      {
+        "symbol": "wSOL",
+        "address": "0x39f36444fcb79b3e691544aee2a832ebef54ca9f",
+        "decimals": 9,
+        "dropAmountWei": "10000000"
+      }
+    ]
+  },
+  "verify": {
+    "wallet": "0xFb66ee7E5F06e8269997715a3Fa203f13584baA0",
+    "prices": {
+      "wUSDC": "99987190",
+      "wETH": "241729045475",
+      "wSOL": "10396761658"
+    },
+    "txHashes": {
+      "book.refreshAll": "0xf9e39acb8f03f019a64139e33621ef73b7810b6e19c62f350b3be1f7ecad367a",
+      "base.approve": "0xd1fd0c77bbc11c43b500c33f81783cbd44e4cd7234200ceb59b092fe9e0150c7",
+      "comet.supply": "0x2e9ec5b28155953da260061da7c2d2c700af0e399ec926adefcfd14fb6b0b31b",
+      "comet.withdraw": "0xec1a98123024cf0c00f41162d3384b6e4f0331aa807face29ea47e056a6bbfea",
+      "faucet.claim": "0x1be1e18a4bc6d89e16fb12933a63ced785c46c2c2c509f5ca80c5da2c190ed42"
+    }
+  }
+}
