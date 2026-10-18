@@ -140,5 +140,45 @@
       "faucet:addToken:wBONK": "0xa9e3b45f84fefec7dfdbc4bc266b2963768014e120b10288fd1449e7122d5010",
       "faucet:fund:wBONK": "0x2430bdf52598be450ed5ce6a57c4d081de70c7e170a5a30b919771fd6312226d"
     }
+  },
+  "verify": {
+    "wallet": "0xFb66ee7E5F06e8269997715a3Fa203f13584baA0",
+    "txHashes": {
+      "book.refreshAll": "0x36fed2da0392d4d3315a98dbcd82c40de1e38db70e4725bd837554afc1b709f5",
+      "faucet.claim": "0x795027c044218c792f460022567dd3228f9f98cf39deca4f850a505bcf7d7ec8",
+      "wbtc.approve_spl": "0x18a38be54ee3fea160a5ab180f628965b0d0672bb3cf4792b8af8cff1e24fe2d",
+      "wbtc.approve": "0x26d044c0efc3f9ae5acc632b32c72f955df8b663274e0068af17b7bd9fb4a85c",
+      "comet.supply": "0x926653a9c2c52e81fad16a09ed78452038d5171727769258957bf31380e29993",
+      "comet.withdraw": "0xf10cf64b4eaf97114bdba9a03fd909bc6083df2a069785c44714c6ff72810549"
+    },
+    "prices": {
+      "base": "99987755",
+      "0x02AEaCE038269f9961C93d04DcacD6FB3adFa55f": "240710699192",
+      "0x39f36444FcB79B3e691544AEE2a832ebef54Ca9f": "10310972035",
+      "0x94834153eA70219D44edFE295697fF0c204Ec68c": "8162232118475",
+      "0x8874ce9D11dd54Ee0Bc8185A05F216f2E7bA1a8D": "13452500935",
+      "0x34b1eD3A33C522F01fACED591DEa9E0468E9614A": "14551394993",
+      "0x0B04Ce26bce2128309956bf2aeD03ac7e8d3E3De": "28784886",
+      "0xE72168524e9DE5d654BFe8473CA11a8108Cd642b": "294"
+    },
+    "faucetBalances": {
+      "wBTC": {
+        "before": "0",
+        "after": "100000"
+      },
+      "wJUP": {
+        "before": "0",
+        "after": "1000000000"
+      },
+      "wBONK": {
+        "before": "0",
+        "after": "100000000000"
+      }
+    },
+    "wbtc": {
+      "supplied": "10000",
+      "collateralAfterSupply": "10000",
+      "collateralAfterWithdraw": "0"
+    }
   }
 }
