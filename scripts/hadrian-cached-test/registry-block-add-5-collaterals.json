@@ -1,0 +1,157 @@
+{
+  "schemaVersion": "1",
+  "chainId": 200010,
+  "chainSlug": "hadrian",
+  "compoundVersion": "v3-0.16.0",
+  "baseAsset": {
+    "type": "wrapper",
+    "address": "0xbce339ba4c3a8de3bb8af1c5539e6ac11da3112d",
+    "underlyingMint": "3b442cb3912157f13a933d0134282d032b5ffecd01a2dbf1b7790608df002ea7",
+    "displaySymbol": "wUSDC",
+    "sourceRef": "rome-solidity@master"
+  },
+  "comets": [
+    {
+      "label": "canonical",
+      "address": "0x642fF1b5983FcDB9eA565B9FF56ac41c0c36d218",
+      "extensionDelegate": "0x60C61741457dBB49555b176ecC5AE4E57651B505",
+      "implementation": "0xA3562fcD1D46093f87aD67777a6142710b8678Cd",
+      "proxyAdmin": "0xaC1ED2Ac07D764f9Bd52FcF8D52610E7970F5eE7",
+      "collateralAssets": [
+        "0x02aeace038269f9961c93d04dcacd6fb3adfa55f",
+        "0x39f36444fcb79b3e691544aee2a832ebef54ca9f",
+        "0x94834153ea70219d44edfe295697ff0c204ec68c",
+        "0x8874ce9d11dd54ee0bc8185a05f216f2e7ba1a8d",
+        "0x34b1ed3a33c522f01faced591dea9e0468e9614a",
+        "0x0b04ce26bce2128309956bf2aed03ac7e8d3e3de",
+        "0xe72168524e9de5d654bfe8473ca11a8108cd642b"
+      ]
+    }
+  ],
+  "bulker": "0x18A2DbfeD0d1f1094289E56e333A14c12C47E73b",
+  "collateralAssets": [
+    {
+      "symbol": "wETH",
+      "address": "0x02aeace038269f9961c93d04dcacd6fb3adfa55f",
+      "priceFeed": "0x03Abaf04882820E0c61DC8182b5e3eBaaC20226d",
+      "priceFeedKind": "cached-pyth",
+      "decimals": 8
+    },
+    {
+      "symbol": "wSOL",
+      "address": "0x39f36444fcb79b3e691544aee2a832ebef54ca9f",
+      "priceFeed": "0xcC9F877aC65521CE952cD784635934C88579bF55",
+      "priceFeedKind": "cached-pyth",
+      "decimals": 9
+    },
+    {
+      "symbol": "wBTC",
+      "address": "0x94834153ea70219d44edfe295697ff0c204ec68c",
+      "priceFeed": "0x6e748Ed1B228F44Efa6ef44De65ca4D8d789d856",
+      "priceFeedKind": "cached-pyth",
+      "decimals": 9
+    },
+    {
+      "symbol": "wJitoSOL",
+      "address": "0x8874ce9d11dd54ee0bc8185a05f216f2e7ba1a8d",
+      "priceFeed": "0x2372073F598319EaD87d2207B11a8138d2Ab8A23",
+      "priceFeedKind": "cached-pyth",
+      "decimals": 8
+    },
+    {
+      "symbol": "wmSOL",
+      "address": "0x34b1ed3a33c522f01faced591dea9e0468e9614a",
+      "priceFeed": "0xA7fc8168bfE6042E17B3135F3b148e95476Bff97",
+      "priceFeedKind": "cached-pyth",
+      "decimals": 9
+    },
+    {
+      "symbol": "wJUP",
+      "address": "0x0b04ce26bce2128309956bf2aed03ac7e8d3e3de",
+      "priceFeed": "0x13268A433c9c0F075Ba0789524f45D192E090F34",
+      "priceFeedKind": "cached-pyth",
+      "decimals": 9
+    },
+    {
+      "symbol": "wBONK",
+      "address": "0xe72168524e9de5d654bfe8473ca11a8108cd642b",
+      "priceFeed": "0x7E48d3ea045C61b3BF4081e42A699DA4466Af1BC",
+      "priceFeedKind": "cached-pyth",
+      "decimals": 9
+    }
+  ],
+  "baseTokenPriceFeed": "0xCE5F78af032489748967c08908ff1E923d223Faf",
+  "baseTokenPriceFeedKind": "cached-pyth",
+  "jito": {
+    "enabled": false,
+    "reason": "Hadrian is anchored to Solana devnet; Jito Block Engine is not available there. Multi-action leverage flows fall back to N-tx sequential UX.",
+    "endpoint": null
+  },
+  "ux": {
+    "singleTxFlows": [
+      "supply",
+      "supplyTo",
+      "withdraw",
+      "withdrawTo",
+      "borrow",
+      "transferAsset",
+      "allow",
+      "supplyCollatBorrowBase",
+      "twoCollatSupply"
+    ],
+    "bundleFlows": [],
+    "fallbackFlows": [
+      "sequentialNTx"
+    ]
+  },
+  "demoUrl": "https://aerarium.devnet.romeprotocol.xyz",
+  "faucet": {
+    "address": "0xf149A784Ccd0c58cF22cbDAE3F67edc76CD1e236",
+    "gasDropWei": "0",
+    "tokens": [
+      {
+        "symbol": "wETH",
+        "address": "0x02aeace038269f9961c93d04dcacd6fb3adfa55f",
+        "decimals": 8,
+        "dropAmountWei": "100000"
+      },
+      {
+        "symbol": "wSOL",
+        "address": "0x39f36444fcb79b3e691544aee2a832ebef54ca9f",
+        "decimals": 9,
+        "dropAmountWei": "10000000"
+      },
+      {
+        "symbol": "wBTC",
+        "address": "0x94834153ea70219d44edfe295697ff0c204ec68c",
+        "decimals": 9,
+        "dropAmountWei": "100000"
+      },
+      {
+        "symbol": "wJUP",
+        "address": "0x0b04ce26bce2128309956bf2aed03ac7e8d3e3de",
+        "decimals": 9,
+        "dropAmountWei": "1000000000"
+      },
+      {
+        "symbol": "wBONK",
+        "address": "0xe72168524e9de5d654bfe8473ca11a8108cd642b",
+        "decimals": 9,
+        "dropAmountWei": "100000000000"
+      }
+    ]
+  },
+  "rpcRef": "chains/200010-hadrian/chain.json#rpcUrl",
+  "deployedAt": "2026-10-17T20:07:49.483Z",
+  "sourceCommits": {
+    "comet": "comet@b19f61ac267bac49311e5665eade7544d36a78ea",
+    "wrapper": "rome-solidity@master",
+    "romeEvm": "rome-evm-private@HEAD"
+  },
+  "status": "live",
+  "notes": "2026-10-18 upgrade of the 2026-10-17 comet (same proxy, ProxyAdmin ownership unchanged): the implementation now lists wBTC, wJitoSOL, wmSOL, wJUP and wBONK after wETH and wSOL, with the old market's factors and caps (wJitoSOL has 8 decimals on its current wrapper, so its supply cap is 100000000000000 raw, the same whole-token cap). wJTO stays out. Rollback is one ProxyAdmin.upgrade back to implementation 0x49000C546Ef26dF2BF7e6baF54363e61cB71c1fA. Feeds are PriceBook 0xbb8961b8 BookFeedAdapters (maxStaleness 900 s); reads revert StalePriceFeed unless the book is refreshed (refreshAll) within 900 s. The faucet drips wETH, wSOL, wBTC, wJUP and wBONK; wJitoSOL and wmSOL are not on it because the deployer holds none of either. Governor, pause guardian and proxy-admin owner: 0x1f4946Be340F06c46A50E65084790968aBcc48F6. The bulker is unchanged and still bound to the retired wUSDC.",
+  "bytecodeHashes": {
+    "bulker": "0x69ed773f9298b9a2e7b3a1f7dae0aabb5067e985c9430a49949bfb892caa27e5",
+    "comets.canonical": "0x64952234eab8f3aed74355c49119f627965640b1efeb6b28430b5a31b0d3b192"
+  }
+}
