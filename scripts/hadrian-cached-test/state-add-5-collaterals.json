@@ -105,5 +105,40 @@
       "lf": "900000000000000000",
       "cap": "1000000000000000"
     }
-  ]
+  ],
+  "faucet": {
+    "address": "0xf149A784Ccd0c58cF22cbDAE3F67edc76CD1e236",
+    "addedTokens": [
+      {
+        "symbol": "wBTC",
+        "address": "0x94834153eA70219D44edFE295697fF0c204Ec68c",
+        "decimals": 9,
+        "dropAmountWei": "100000"
+      },
+      {
+        "symbol": "wJUP",
+        "address": "0x0B04Ce26bce2128309956bf2aeD03ac7e8d3E3De",
+        "decimals": 9,
+        "dropAmountWei": "1000000000"
+      },
+      {
+        "symbol": "wBONK",
+        "address": "0xE72168524e9DE5d654BFe8473CA11a8108Cd642b",
+        "decimals": 9,
+        "dropAmountWei": "100000000000"
+      }
+    ],
+    "notAdded": [
+      "wJitoSOL: F6 holds 0, needs 3000000",
+      "wmSOL: F6 holds 0, needs 30000000"
+    ],
+    "txHashes": {
+      "faucet:addToken:wBTC": "0xdb8f332e6a6bc21c2ad994c093f0143034b9663fa59cd713e6563dd6816d82e4",
+      "faucet:fund:wBTC": "0x58d9aafc7d115ae9336e5a26bf88ffdc3c1ff646bfe414c2e3b1d2f16dbba9d1",
+      "faucet:addToken:wJUP": "0x5bb7d74cb79d57fa0e56b0ddb465e2d10110419276fc9bfd2ad1b9faec7fd549",
+      "faucet:fund:wJUP": "0x5177fccb760a2b7e7117e7ab587b6bb33927b70027fe7b6365f25033b2837c0a",
+      "faucet:addToken:wBONK": "0xa9e3b45f84fefec7dfdbc4bc266b2963768014e120b10288fd1449e7122d5010",
+      "faucet:fund:wBONK": "0x2430bdf52598be450ed5ce6a57c4d081de70c7e170a5a30b919771fd6312226d"
+    }
+  }
 }
