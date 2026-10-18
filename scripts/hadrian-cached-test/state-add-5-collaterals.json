@@ -1,0 +1,109 @@
+{
+  "upgradedAt": "2026-10-18T08:54:56.346Z",
+  "network": "hadrian",
+  "chainId": 200010,
+  "cometProxy": "0x642fF1b5983FcDB9eA565B9FF56ac41c0c36d218",
+  "proxyAdmin": "0xaC1ED2Ac07D764f9Bd52FcF8D52610E7970F5eE7",
+  "originalImpl": "0x49000C546Ef26dF2BF7e6baF54363e61cB71c1fA",
+  "newImpl": "0xA3562fcD1D46093f87aD67777a6142710b8678Cd",
+  "rollback": {
+    "tx": "ProxyAdmin(0xaC1ED2Ac07D764f9Bd52FcF8D52610E7970F5eE7).upgrade(0x642fF1b5983FcDB9eA565B9FF56ac41c0c36d218, 0x49000C546Ef26dF2BF7e6baF54363e61cB71c1fA) signed by 0x1f4946Be340F06c46A50E65084790968aBcc48F6; MODE=restore of this script"
+  },
+  "txHashes": {
+    "deploy": "0x871079b89dad7365f9b1a16b2fd3710b9b73b99f4d37fdd5956e25187c0e197f",
+    "ata:wBTC": "0x51910e1dd8673d32866a14e8d81ccccd6d26f229758d4f7d5ef06e760d3298eb",
+    "ata:wJitoSOL": "0xd6453893abeefad7f5f1e30b56a00e6c009a5beab92f5356155888b6f12c7216",
+    "ata:wmSOL": "0x0fd1facc8fc28940511c0c841b39cb6772b8c4dbc8eacaf46c6fe67780940b44",
+    "ata:wJUP": "0x75571a8159f57004a8705b577754d7af97cfae14c731325d773517e9d4e74480",
+    "ata:wBONK": "0x9574f21650fbf0214bf829b426910efa77c5d562e58f7ae878ee9b763690401c",
+    "upgrade": "0x4f73f95fa04a0d7cacca45511a1877cf96579e7ea626c8b2103023ba639faa21"
+  },
+  "parameterSource": "0xfc322489D4089AdCC79074C8058Fd257c63622D8",
+  "book": "0xbb8961b840610934140d96f41bc0d38835774550",
+  "before": {
+    "numAssets": 2,
+    "totalSupply": "0",
+    "totalBorrow": "0",
+    "totalSupplyBase": "0",
+    "totalBorrowBase": "0"
+  },
+  "after": {
+    "numAssets": 7,
+    "totalSupply": "0",
+    "totalBorrow": "0",
+    "totalSupplyBase": "0",
+    "totalBorrowBase": "0"
+  },
+  "assets": [
+    {
+      "offset": 0,
+      "asset": "0x02AEaCE038269f9961C93d04DcacD6FB3adFa55f",
+      "priceFeed": "0x03Abaf04882820E0c61DC8182b5e3eBaaC20226d",
+      "scale": "100000000",
+      "bcf": "700000000000000000",
+      "lcf": "800000000000000000",
+      "lf": "900000000000000000",
+      "cap": "100000000000000"
+    },
+    {
+      "offset": 1,
+      "asset": "0x39f36444FcB79B3e691544AEE2a832ebef54Ca9f",
+      "priceFeed": "0xcC9F877aC65521CE952cD784635934C88579bF55",
+      "scale": "1000000000",
+      "bcf": "700000000000000000",
+      "lcf": "800000000000000000",
+      "lf": "900000000000000000",
+      "cap": "1000000000000000"
+    },
+    {
+      "offset": 2,
+      "asset": "0x94834153eA70219D44edFE295697fF0c204Ec68c",
+      "priceFeed": "0x6e748Ed1B228F44Efa6ef44De65ca4D8d789d856",
+      "scale": "1000000000",
+      "bcf": "700000000000000000",
+      "lcf": "800000000000000000",
+      "lf": "900000000000000000",
+      "cap": "1000000000000000"
+    },
+    {
+      "offset": 3,
+      "asset": "0x8874ce9D11dd54Ee0Bc8185A05F216f2E7bA1a8D",
+      "priceFeed": "0x2372073F598319EaD87d2207B11a8138d2Ab8A23",
+      "scale": "100000000",
+      "bcf": "700000000000000000",
+      "lcf": "800000000000000000",
+      "lf": "900000000000000000",
+      "cap": "100000000000000"
+    },
+    {
+      "offset": 4,
+      "asset": "0x34b1eD3A33C522F01fACED591DEa9E0468E9614A",
+      "priceFeed": "0xA7fc8168bfE6042E17B3135F3b148e95476Bff97",
+      "scale": "1000000000",
+      "bcf": "700000000000000000",
+      "lcf": "800000000000000000",
+      "lf": "900000000000000000",
+      "cap": "1000000000000000"
+    },
+    {
+      "offset": 5,
+      "asset": "0x0B04Ce26bce2128309956bf2aeD03ac7e8d3E3De",
+      "priceFeed": "0x13268A433c9c0F075Ba0789524f45D192E090F34",
+      "scale": "1000000000",
+      "bcf": "700000000000000000",
+      "lcf": "800000000000000000",
+      "lf": "900000000000000000",
+      "cap": "1000000000000000"
+    },
+    {
+      "offset": 6,
+      "asset": "0xE72168524e9DE5d654BFe8473CA11a8108Cd642b",
+      "priceFeed": "0x7E48d3ea045C61b3BF4081e42A699DA4466Af1BC",
+      "scale": "1000000000",
+      "bcf": "700000000000000000",
+      "lcf": "800000000000000000",
+      "lf": "900000000000000000",
+      "cap": "1000000000000000"
+    }
+  ]
+}
