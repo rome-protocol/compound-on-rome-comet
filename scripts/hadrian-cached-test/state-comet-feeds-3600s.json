@@ -243,5 +243,57 @@
       "lf": "900000000000000000",
       "cap": "1000000000000000"
     }
-  ]
+  ],
+  "verify": {
+    "wallet": "0xFb66ee7E5F06e8269997715a3Fa203f13584baA0",
+    "txHashes": {
+      "book.refreshAll": "0xbde0682adb3b780f7999c101d139bf8ddfb24fc745434958061143078038e3b3",
+      "wusdc.approve_spl": "0x408150e30883c1b30ef9246260259713163831b0e3ac5046f82a25d4a46e63d1",
+      "wusdc.approve": "0x1b8940a959c0b4c80f67fa6f54eb87244e4ff1608f833a6f8cd442f95448fdf2",
+      "comet.supply": "0x71b90d9363e372c1e431de13b74ef29e1b6c83245eeb7abde5a3ccb9ca1d51fd",
+      "comet.withdraw": "0x1d7673bb58657451ccec70b9f894ddbb5a0812727a50cd2d734da3afc4c16c48"
+    },
+    "prices": {
+      "base": {
+        "feed": "0x889c1d9f2dD8f5FcE75E260E884A2919e16dbBd5",
+        "price": "99987278"
+      },
+      "0x02AEaCE038269f9961C93d04DcacD6FB3adFa55f": {
+        "feed": "0xe765b1aa15046ff217Bd2e8824986F46037bB36f",
+        "price": "241753712482"
+      },
+      "0x39f36444FcB79B3e691544AEE2a832ebef54Ca9f": {
+        "feed": "0x173fe9b24c667827Da8Dd8B8e5aD23fd0e76f8bd",
+        "price": "10393000050"
+      },
+      "0x94834153eA70219D44edFE295697fF0c204Ec68c": {
+        "feed": "0xD656B135327a5c4A835818340e8b0B51880DDC77",
+        "price": "8202684536251"
+      },
+      "0x8874ce9D11dd54Ee0Bc8185A05F216f2E7bA1a8D": {
+        "feed": "0xDde3A7d1EB7828F7183f8fA1D3B1FcF89757606F",
+        "price": "13571850365"
+      },
+      "0x34b1eD3A33C522F01fACED591DEa9E0468E9614A": {
+        "feed": "0x1016dDc9A4DeC29A4C1F639B4F9e7F2E09Af7143",
+        "price": "14676502637"
+      },
+      "0x0B04Ce26bce2128309956bf2aeD03ac7e8d3E3De": {
+        "feed": "0xe0113dc3Da2452d99Ffe1187018F62644a538D37",
+        "price": "28968046"
+      },
+      "0xE72168524e9DE5d654BFe8473CA11a8108Cd642b": {
+        "feed": "0x1ec7e20d8fde7f2a085c57DDC09Df4A82eB5e4BF",
+        "price": "295"
+      }
+    },
+    "wusdc": {
+      "supplied": "10000",
+      "balanceBefore": "0",
+      "balanceAfterSupply": "10000",
+      "balanceAfterWithdraw": "0",
+      "walletBefore": "99998",
+      "walletAfter": "99998"
+    }
+  }
 }

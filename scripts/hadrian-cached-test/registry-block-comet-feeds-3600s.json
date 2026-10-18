@@ -1,0 +1,157 @@
+{
+  "schemaVersion": "1",
+  "chainId": 200010,
+  "chainSlug": "hadrian",
+  "compoundVersion": "v3-0.16.0",
+  "baseAsset": {
+    "type": "wrapper",
+    "address": "0xbce339ba4c3a8de3bb8af1c5539e6ac11da3112d",
+    "underlyingMint": "3b442cb3912157f13a933d0134282d032b5ffecd01a2dbf1b7790608df002ea7",
+    "displaySymbol": "wUSDC",
+    "sourceRef": "rome-solidity@master"
+  },
+  "comets": [
+    {
+      "label": "canonical",
+      "address": "0x642fF1b5983FcDB9eA565B9FF56ac41c0c36d218",
+      "extensionDelegate": "0x60C61741457dBB49555b176ecC5AE4E57651B505",
+      "implementation": "0x42D889e2035340EE99f617a55294C6563850c875",
+      "proxyAdmin": "0xaC1ED2Ac07D764f9Bd52FcF8D52610E7970F5eE7",
+      "collateralAssets": [
+        "0x02aeace038269f9961c93d04dcacd6fb3adfa55f",
+        "0x39f36444fcb79b3e691544aee2a832ebef54ca9f",
+        "0x94834153ea70219d44edfe295697ff0c204ec68c",
+        "0x8874ce9d11dd54ee0bc8185a05f216f2e7ba1a8d",
+        "0x34b1ed3a33c522f01faced591dea9e0468e9614a",
+        "0x0b04ce26bce2128309956bf2aed03ac7e8d3e3de",
+        "0xe72168524e9de5d654bfe8473ca11a8108cd642b"
+      ]
+    }
+  ],
+  "bulker": "0x18A2DbfeD0d1f1094289E56e333A14c12C47E73b",
+  "collateralAssets": [
+    {
+      "symbol": "wETH",
+      "address": "0x02aeace038269f9961c93d04dcacd6fb3adfa55f",
+      "priceFeed": "0xe765b1aa15046ff217Bd2e8824986F46037bB36f",
+      "priceFeedKind": "cached-pyth",
+      "decimals": 8
+    },
+    {
+      "symbol": "wSOL",
+      "address": "0x39f36444fcb79b3e691544aee2a832ebef54ca9f",
+      "priceFeed": "0x173fe9b24c667827Da8Dd8B8e5aD23fd0e76f8bd",
+      "priceFeedKind": "cached-pyth",
+      "decimals": 9
+    },
+    {
+      "symbol": "wBTC",
+      "address": "0x94834153ea70219d44edfe295697ff0c204ec68c",
+      "priceFeed": "0xD656B135327a5c4A835818340e8b0B51880DDC77",
+      "priceFeedKind": "cached-pyth",
+      "decimals": 9
+    },
+    {
+      "symbol": "wJitoSOL",
+      "address": "0x8874ce9d11dd54ee0bc8185a05f216f2e7ba1a8d",
+      "priceFeed": "0xDde3A7d1EB7828F7183f8fA1D3B1FcF89757606F",
+      "priceFeedKind": "cached-pyth",
+      "decimals": 8
+    },
+    {
+      "symbol": "wmSOL",
+      "address": "0x34b1ed3a33c522f01faced591dea9e0468e9614a",
+      "priceFeed": "0x1016dDc9A4DeC29A4C1F639B4F9e7F2E09Af7143",
+      "priceFeedKind": "cached-pyth",
+      "decimals": 9
+    },
+    {
+      "symbol": "wJUP",
+      "address": "0x0b04ce26bce2128309956bf2aed03ac7e8d3e3de",
+      "priceFeed": "0xe0113dc3Da2452d99Ffe1187018F62644a538D37",
+      "priceFeedKind": "cached-pyth",
+      "decimals": 9
+    },
+    {
+      "symbol": "wBONK",
+      "address": "0xe72168524e9de5d654bfe8473ca11a8108cd642b",
+      "priceFeed": "0x1ec7e20d8fde7f2a085c57DDC09Df4A82eB5e4BF",
+      "priceFeedKind": "cached-pyth",
+      "decimals": 9
+    }
+  ],
+  "baseTokenPriceFeed": "0x889c1d9f2dD8f5FcE75E260E884A2919e16dbBd5",
+  "baseTokenPriceFeedKind": "cached-pyth",
+  "jito": {
+    "enabled": false,
+    "reason": "Hadrian is anchored to Solana devnet; Jito Block Engine is not available there. Multi-action leverage flows fall back to N-tx sequential UX.",
+    "endpoint": null
+  },
+  "ux": {
+    "singleTxFlows": [
+      "supply",
+      "supplyTo",
+      "withdraw",
+      "withdrawTo",
+      "borrow",
+      "transferAsset",
+      "allow",
+      "supplyCollatBorrowBase",
+      "twoCollatSupply"
+    ],
+    "bundleFlows": [],
+    "fallbackFlows": [
+      "sequentialNTx"
+    ]
+  },
+  "demoUrl": "https://aerarium.devnet.romeprotocol.xyz",
+  "faucet": {
+    "address": "0xf149A784Ccd0c58cF22cbDAE3F67edc76CD1e236",
+    "gasDropWei": "0",
+    "tokens": [
+      {
+        "symbol": "wETH",
+        "address": "0x02aeace038269f9961c93d04dcacd6fb3adfa55f",
+        "decimals": 8,
+        "dropAmountWei": "100000"
+      },
+      {
+        "symbol": "wSOL",
+        "address": "0x39f36444fcb79b3e691544aee2a832ebef54ca9f",
+        "decimals": 9,
+        "dropAmountWei": "10000000"
+      },
+      {
+        "symbol": "wBTC",
+        "address": "0x94834153ea70219d44edfe295697ff0c204ec68c",
+        "decimals": 9,
+        "dropAmountWei": "100000"
+      },
+      {
+        "symbol": "wJUP",
+        "address": "0x0b04ce26bce2128309956bf2aed03ac7e8d3e3de",
+        "decimals": 9,
+        "dropAmountWei": "1000000000"
+      },
+      {
+        "symbol": "wBONK",
+        "address": "0xe72168524e9de5d654bfe8473ca11a8108cd642b",
+        "decimals": 9,
+        "dropAmountWei": "100000000000"
+      }
+    ]
+  },
+  "rpcRef": "chains/200010-hadrian/chain.json#rpcUrl",
+  "deployedAt": "2026-10-18T10:49:56.583Z",
+  "sourceCommits": {
+    "comet": "comet@b19f61ac267bac49311e5665eade7544d36a78ea",
+    "wrapper": "rome-solidity@master",
+    "romeEvm": "rome-evm-private@HEAD"
+  },
+  "status": "live",
+  "notes": "2026-10-18 feed change on the same proxy (ProxyAdmin ownership unchanged): the implementation is new (0x42D889e2035340EE99f617a55294C6563850c875) and differs from the previous one (0xA3562fcD1D46093f87aD67777a6142710b8678Cd) only in the base and 7 collateral price feeds, which are now BookFeedAdapters of PriceBook 0xac3d8004 with maxStaleness 3600 s (they were 900 s adapters of PriceBook 0xbb8961b8). Assets, order, factors, caps and rates are unchanged; totals and every collateral total are unchanged. Reads revert StalePriceFeed unless the book has been refreshed within 3600 s. Rollback is one ProxyAdmin.upgrade back to implementation 0xA3562fcD1D46093f87aD67777a6142710b8678Cd, valid while nothing else about the comet changes. The bulker is unchanged and still bound to the retired wUSDC. Governor, pause guardian and proxy-admin owner: 0x1f4946Be340F06c46A50E65084790968aBcc48F6.",
+  "bytecodeHashes": {
+    "bulker": "0x69ed773f9298b9a2e7b3a1f7dae0aabb5067e985c9430a49949bfb892caa27e5",
+    "comets.canonical": "0x64952234eab8f3aed74355c49119f627965640b1efeb6b28430b5a31b0d3b192"
+  }
+}
